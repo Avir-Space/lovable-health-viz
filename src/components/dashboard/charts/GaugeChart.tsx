@@ -1,4 +1,4 @@
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface GaugeChartProps {
   data: Record<string, any>[];
@@ -34,6 +34,14 @@ export function GaugeChart({ data, xKey, yKey }: GaugeChartProps) {
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Pie>
+          <Tooltip
+            formatter={(value: number, name: string) => [`${value}%`, name]}
+            contentStyle={{
+              backgroundColor: "hsl(var(--popover))",
+              border: "1px solid hsl(var(--border))",
+              borderRadius: "var(--radius)",
+            }}
+          />
         </PieChart>
       </ResponsiveContainer>
       <div className="text-center -mt-16">

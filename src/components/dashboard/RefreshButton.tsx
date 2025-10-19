@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 
@@ -49,7 +49,11 @@ export function RefreshButton({ onRefresh }: RefreshButtonProps) {
       disabled={isRefreshing}
       className="h-8 w-8"
     >
-      <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+      {isRefreshing ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <RefreshCw className="h-4 w-4" />
+      )}
     </Button>
   );
 }

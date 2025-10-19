@@ -10,6 +10,7 @@ import Impact from "./pages/Impact";
 import Settings from "./pages/Settings";
 import Admin from "./pages/Admin";
 import MaintenanceHealthOverview from "./pages/dashboards/MaintenanceHealthOverview";
+import InventoryAndSparesVisibility from "./pages/dashboards/InventoryAndSparesVisibility";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/dashboards/maintenance-health-overview" element={<MaintenanceHealthOverview />} />
+            <Route path="/dashboards/inventory-spares-visibility" element={<InventoryAndSparesVisibility />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

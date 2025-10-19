@@ -16,11 +16,11 @@ interface KPICardProps {
 
 export function KPICard({ title, sources = ["AMOS"], children, onRefresh, aiSuggestion }: KPICardProps) {
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col animate-fade-in hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
-            <CardTitle className="text-base font-semibold">{title}</CardTitle>
+            <CardTitle className="text-base font-semibold" title={title}>{title}</CardTitle>
             <div className="flex items-center gap-2 flex-wrap">
               {sources.map((source) => (
                 <SourceBadge key={source} source={source} />

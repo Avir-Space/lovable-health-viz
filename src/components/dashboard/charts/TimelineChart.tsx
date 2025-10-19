@@ -34,6 +34,8 @@ export function TimelineChart({ data, xKey, yKey, xLabel, yLabel }: TimelineChar
             tick={{ fontSize: 12 }}
           />
           <Tooltip
+            formatter={(value: number) => [value, yLabel]}
+            labelFormatter={(label: string) => `${xLabel}: ${label}`}
             contentStyle={{
               backgroundColor: "hsl(var(--popover))",
               border: "1px solid hsl(var(--border))",

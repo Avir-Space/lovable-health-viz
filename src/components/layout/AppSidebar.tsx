@@ -21,6 +21,7 @@ const navItems = [
 
 const predefinedDashboards = [
   { title: "Maintenance Health Overview", url: "/dashboards/maintenance-health-overview" },
+  { title: "Inventory & Spares Visibility", url: "/dashboards/inventory-spares-visibility" },
 ];
 
 const settingsItems = [

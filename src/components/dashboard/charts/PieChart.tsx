@@ -46,6 +46,7 @@ export function PieChart({ data, xKey, yKey }: PieChartProps) {
             ))}
           </Pie>
           <Tooltip
+            formatter={(value: number, name: string) => [`${value}%`, name]}
             contentStyle={{
               backgroundColor: "hsl(var(--popover))",
               border: "1px solid hsl(var(--border))",

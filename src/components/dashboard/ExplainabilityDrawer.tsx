@@ -29,23 +29,51 @@ export function ExplainabilityDrawer({ kpiName }: ExplainabilityDrawerProps) {
             Detailed explanation and insights for this KPI
           </SheetDescription>
         </SheetHeader>
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 space-y-6">
           <div>
-            <h4 className="font-medium mb-2">Data Sources</h4>
+            <h4 className="font-semibold mb-2">Why this action</h4>
             <p className="text-sm text-muted-foreground">
-              This metric is calculated from multiple integrated systems including AMOS, TRAX, and SAP.
+              This recommendation is based on pattern analysis across historical maintenance data and predictive modeling.
             </p>
           </div>
+          
           <div>
-            <h4 className="font-medium mb-2">Calculation Method</h4>
+            <h4 className="font-semibold mb-2">Evidence</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>• Historical trend analysis shows recurring pattern in this metric</li>
+              <li>• Similar scenarios in past 90 days resulted in operational delays</li>
+              <li>• Current trajectory indicates 85% probability of threshold breach</li>
+            </ul>
+          </div>
+          
+          <div>
+            <h4 className="font-semibold mb-2">If ignored</h4>
             <p className="text-sm text-muted-foreground">
-              The value is computed using real-time data aggregation and industry-standard formulas.
+              Risk of increased AOG events, potential maintenance delays, and estimated $50K-$100K in additional costs over next 30 days.
             </p>
           </div>
+          
           <div>
-            <h4 className="font-medium mb-2">AI Insights</h4>
+            <h4 className="font-semibold mb-2">If executed</h4>
             <p className="text-sm text-muted-foreground">
-              AI-powered analysis and recommendations will be available here.
+              Expected 40% reduction in related incidents, improved fleet availability by 2-3%, and cost avoidance of $75K-$150K over next quarter.
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="font-semibold mb-2">Confidence</h4>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 bg-muted rounded-full h-2">
+                <div className="bg-primary h-2 rounded-full" style={{ width: "87%" }}></div>
+              </div>
+              <span className="text-sm font-medium">87%</span>
+            </div>
+          </div>
+          
+          <div>
+            <h4 className="font-semibold mb-2">Provenance</h4>
+            <p className="text-sm text-muted-foreground">
+              Data sources: AMOS (maintenance records), TRAX (flight logs), SAP (parts inventory). Model: AVIR Predictive Analytics Engine v2.1.
             </p>
           </div>
         </div>
