@@ -17,10 +17,16 @@ interface TimelineChartProps {
 }
 
 export function TimelineChart({ data, xKey, yKey, xLabel, yLabel }: TimelineChartProps) {
+  // Filter out metadata rows
+  const filteredData = data.filter(item => 
+    typeof item[yKey] === 'number' && 
+    !['KPI Variant', 'Variant Detail', 'Reason to Track'].includes(String(item[xKey]))
+  );
+  
   return (
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <RechartsBarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+        <RechartsBarChart data={filteredData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
             dataKey={xKey}

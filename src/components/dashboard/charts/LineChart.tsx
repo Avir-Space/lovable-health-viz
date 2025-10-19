@@ -32,6 +32,12 @@ export function LineChart({
   secondYAxis = false,
   secondYAxisLabel
 }: LineChartProps) {
+  // Filter out metadata rows
+  const filteredData = data.filter(item => 
+    typeof item[yKey] === 'number' && 
+    !['KPI Variant', 'Variant Detail', 'Reason to Track'].includes(String(item[xKey]))
+  );
+  
   // Check if we need dual Y-axis (for AOG Events chart)
   const hasDualAxis = secondYAxis && additionalKeys.length > 0;
   
@@ -39,7 +45,7 @@ export function LineChart({
     return (
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 5, right: 50, left: 20, bottom: 5 }}>
+          <ComposedChart data={filteredData} margin={{ top: 5, right: 50, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis
               dataKey={xKey}
@@ -61,6 +67,7 @@ export function LineChart({
               tick={{ fontSize: 12 }}
             />
             <Tooltip
+              formatter={(value: number) => [typeof value === 'number' ? value.toFixed(2) : value, ""]}
               contentStyle={{
                 backgroundColor: "hsl(var(--popover))",
                 border: "1px solid hsl(var(--border))",
@@ -92,7 +99,7 @@ export function LineChart({
   return (
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <RechartsLineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+        <RechartsLineChart data={filteredData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
             dataKey={xKey}
@@ -106,6 +113,7 @@ export function LineChart({
             tick={{ fontSize: 12 }}
           />
           <Tooltip
+            formatter={(value: number) => [typeof value === 'number' ? value.toFixed(2) : value, ""]}
             contentStyle={{
               backgroundColor: "hsl(var(--popover))",
               border: "1px solid hsl(var(--border))",
@@ -126,7 +134,7 @@ export function LineChart({
               key={key}
               type="monotone"
               dataKey={key}
-              stroke={`hsl(var(--chart-${(idx % 5) + 2})}`}
+              stroke={`hsl(var(--chart-${(idx % 5) + 2}))`}
               strokeWidth={2}
               dot={{ fill: `hsl(var(--chart-${(idx % 5) + 2}))`, r: 4 }}
             />

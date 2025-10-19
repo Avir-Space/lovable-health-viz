@@ -16,6 +16,12 @@ interface TableChartProps {
 }
 
 export function TableChart({ data, columns }: TableChartProps) {
+  // Filter out metadata rows
+  const filteredData = data.filter(item => {
+    const firstValue = item[columns[0]];
+    return !['KPI Variant', 'Variant Detail', 'Reason to Track'].includes(String(firstValue));
+  });
+  
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
@@ -28,7 +34,7 @@ export function TableChart({ data, columns }: TableChartProps) {
     }
   };
 
-  const sortedData = [...data].sort((a, b) => {
+  const sortedData = [...filteredData].sort((a, b) => {
     if (!sortColumn) return 0;
     
     const aVal = a[sortColumn];
@@ -67,9 +73,15 @@ export function TableChart({ data, columns }: TableChartProps) {
         <TableBody>
           {sortedData.map((row, idx) => (
             <TableRow key={idx}>
-              {columns.map((col) => (
-                <TableCell key={col}>{row[col]}</TableCell>
-              ))}
+              {columns.map((col) => {
+                const value = row[col];
+                const displayValue = typeof value === 'number' ? value.toFixed(2) : value;
+                return (
+                  <TableCell key={col} title={String(value)}>
+                    {displayValue}
+                  </TableCell>
+                );
+              })}
             </TableRow>
           ))}
         </TableBody>

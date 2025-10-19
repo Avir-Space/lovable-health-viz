@@ -22,7 +22,13 @@ export function PieChart({ data, xKey, yKey }: PieChartProps) {
     "hsl(var(--chart-5))",
   ];
 
-  const chartData = data.map((item) => ({
+  // Filter out metadata rows and only keep numeric data
+  const filteredData = data.filter(item => 
+    typeof item[yKey] === 'number' && 
+    !['KPI Variant', 'Variant Detail', 'Reason to Track'].includes(String(item[xKey]))
+  );
+
+  const chartData = filteredData.map((item) => ({
     name: item[xKey],
     value: item[yKey],
   }));

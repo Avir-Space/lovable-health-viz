@@ -11,6 +11,11 @@ import Settings from "./pages/Settings";
 import Admin from "./pages/Admin";
 import MaintenanceHealthOverview from "./pages/dashboards/MaintenanceHealthOverview";
 import InventoryAndSparesVisibility from "./pages/dashboards/InventoryAndSparesVisibility";
+import ComplianceAirworthiness from "./pages/dashboards/ComplianceAirworthiness";
+import OpsDispatchReliability from "./pages/dashboards/OpsDispatchReliability";
+import FuelEfficiency from "./pages/dashboards/FuelEfficiency";
+import FinancialProcurement from "./pages/dashboards/FinancialProcurement";
+import CrewDutySnapshot from "./pages/dashboards/CrewDutySnapshot";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +35,11 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="/dashboards/maintenance-health-overview" element={<MaintenanceHealthOverview />} />
             <Route path="/dashboards/inventory-spares-visibility" element={<InventoryAndSparesVisibility />} />
+            <Route path="/dashboards/compliance-airworthiness" element={<ComplianceAirworthiness />} />
+            <Route path="/dashboards/ops-dispatch-reliability" element={<OpsDispatchReliability />} />
+            <Route path="/dashboards/fuel-efficiency" element={<FuelEfficiency />} />
+            <Route path="/dashboards/financial-procurement" element={<FinancialProcurement />} />
+            <Route path="/dashboards/crew-duty-snapshot" element={<CrewDutySnapshot />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -9,7 +9,13 @@ interface HeatmapChartProps {
 }
 
 export function HeatmapChart({ data, xKey, yKey, xLabel, yLabel }: HeatmapChartProps) {
-  const maxValue = Math.max(...data.map((d) => d[yKey]));
+  // Filter out metadata rows
+  const filteredData = data.filter(item => 
+    typeof item[yKey] === 'number' && 
+    !['KPI Variant', 'Variant Detail', 'Reason to Track'].includes(String(item[xKey]))
+  );
+  
+  const maxValue = Math.max(...filteredData.map((d) => d[yKey]));
 
   const getColor = (value: number) => {
     const intensity = value / maxValue;
@@ -21,7 +27,7 @@ export function HeatmapChart({ data, xKey, yKey, xLabel, yLabel }: HeatmapChartP
   return (
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+        <BarChart data={filteredData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
             dataKey={xKey}
@@ -35,6 +41,7 @@ export function HeatmapChart({ data, xKey, yKey, xLabel, yLabel }: HeatmapChartP
             tick={{ fontSize: 12 }}
           />
           <Tooltip
+            formatter={(value: number) => [value.toFixed(2), yLabel]}
             contentStyle={{
               backgroundColor: "hsl(var(--popover))",
               border: "1px solid hsl(var(--border))",
@@ -42,7 +49,7 @@ export function HeatmapChart({ data, xKey, yKey, xLabel, yLabel }: HeatmapChartP
             }}
           />
           <Bar dataKey={yKey} radius={[8, 8, 0, 0]}>
-            {data.map((entry, index) => (
+            {filteredData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={getColor(entry[yKey])} />
             ))}
           </Bar>

@@ -7,7 +7,12 @@ interface GaugeChartProps {
 }
 
 export function GaugeChart({ data, xKey, yKey }: GaugeChartProps) {
-  const value = data.find((d) => d[xKey] === "Airworthy")?.[yKey] || 0;
+  // Find the actual value row (skip metadata rows like "KPI Variant", "Variant Detail", etc.)
+  const valueRow = data.find(row => 
+    typeof row[yKey] === 'number' && row[xKey] && 
+    !['KPI Variant', 'Variant Detail', 'Reason to Track', 'Segment', 'State', 'Category'].includes(String(row[xKey]))
+  );
+  const value = valueRow?.[yKey] || data.find((d) => d[xKey] === "Airworthy")?.[yKey] || 0;
   const remaining = 100 - value;
 
   const chartData = [
