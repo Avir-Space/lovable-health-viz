@@ -22,6 +22,11 @@ const navItems = [
 const predefinedDashboards = [
   { title: "Maintenance Health Overview", url: "/dashboards/maintenance-health-overview" },
   { title: "Inventory & Spares Visibility", url: "/dashboards/inventory-spares-visibility" },
+  { title: "Compliance & Airworthiness", url: "/dashboards/compliance-airworthiness" },
+  { title: "Ops & Dispatch Reliability", url: "/dashboards/ops-dispatch-reliability" },
+  { title: "Fuel & Efficiency", url: "/dashboards/fuel-efficiency" },
+  { title: "Financial & Procurement", url: "/dashboards/financial-procurement" },
+  { title: "Crew & Duty Snapshot", url: "/dashboards/crew-duty-snapshot" },
 ];
 
 const settingsItems = [

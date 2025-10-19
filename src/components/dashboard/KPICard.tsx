@@ -12,9 +12,10 @@ interface KPICardProps {
   children: ReactNode;
   onRefresh?: () => void;
   aiSuggestion?: string;
+  aiAction?: string;
 }
 
-export function KPICard({ title, sources = ["AMOS"], children, onRefresh, aiSuggestion }: KPICardProps) {
+export function KPICard({ title, sources = ["AMOS"], children, onRefresh, aiSuggestion, aiAction }: KPICardProps) {
   return (
     <Card className="flex flex-col animate-fade-in hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">
       <CardHeader className="pb-3">
@@ -42,7 +43,7 @@ export function KPICard({ title, sources = ["AMOS"], children, onRefresh, aiSugg
             <div className="flex-1 space-y-2">
               <p className="text-sm text-muted-foreground">{aiSuggestion}</p>
               <Button size="sm" variant="outline" className="h-7 text-xs">
-                View Details
+                {aiAction || "View Details"}
               </Button>
             </div>
           </div>
