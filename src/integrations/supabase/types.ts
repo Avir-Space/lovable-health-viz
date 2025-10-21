@@ -14,13 +14,215 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      kpi_categories: {
+        Row: {
+          category: string
+          id: number
+          kpi_key: string | null
+          series: string | null
+          snapshot_ts: string
+          value: number
+        }
+        Insert: {
+          category: string
+          id?: number
+          kpi_key?: string | null
+          series?: string | null
+          snapshot_ts?: string
+          value: number
+        }
+        Update: {
+          category?: string
+          id?: number
+          kpi_key?: string | null
+          series?: string | null
+          snapshot_ts?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_categories_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "kpi_meta"
+            referencedColumns: ["kpi_key"]
+          },
+        ]
+      }
+      kpi_heatmap: {
+        Row: {
+          id: number
+          kpi_key: string | null
+          snapshot_ts: string
+          value: number
+          x_label: string
+          y_label: string
+        }
+        Insert: {
+          id?: number
+          kpi_key?: string | null
+          snapshot_ts?: string
+          value: number
+          x_label: string
+          y_label: string
+        }
+        Update: {
+          id?: number
+          kpi_key?: string | null
+          snapshot_ts?: string
+          value?: number
+          x_label?: string
+          y_label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_heatmap_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "kpi_meta"
+            referencedColumns: ["kpi_key"]
+          },
+        ]
+      }
+      kpi_meta: {
+        Row: {
+          config: Json | null
+          dashboard: string
+          kpi_key: string
+          name: string
+          unit: string | null
+          variant: string
+          x_axis: string | null
+          y_axis: string | null
+        }
+        Insert: {
+          config?: Json | null
+          dashboard: string
+          kpi_key: string
+          name: string
+          unit?: string | null
+          variant: string
+          x_axis?: string | null
+          y_axis?: string | null
+        }
+        Update: {
+          config?: Json | null
+          dashboard?: string
+          kpi_key?: string
+          name?: string
+          unit?: string | null
+          variant?: string
+          x_axis?: string | null
+          y_axis?: string | null
+        }
+        Relationships: []
+      }
+      kpi_table_rows: {
+        Row: {
+          id: number
+          kpi_key: string | null
+          row_data: Json
+          snapshot_ts: string
+        }
+        Insert: {
+          id?: number
+          kpi_key?: string | null
+          row_data: Json
+          snapshot_ts?: string
+        }
+        Update: {
+          id?: number
+          kpi_key?: string | null
+          row_data?: Json
+          snapshot_ts?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_table_rows_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "kpi_meta"
+            referencedColumns: ["kpi_key"]
+          },
+        ]
+      }
+      kpi_timeseries: {
+        Row: {
+          id: number
+          inserted_at: string | null
+          kpi_key: string | null
+          range_tag: string | null
+          series: string | null
+          ts: string
+          value: number
+        }
+        Insert: {
+          id?: number
+          inserted_at?: string | null
+          kpi_key?: string | null
+          range_tag?: string | null
+          series?: string | null
+          ts: string
+          value: number
+        }
+        Update: {
+          id?: number
+          inserted_at?: string | null
+          kpi_key?: string | null
+          range_tag?: string | null
+          series?: string | null
+          ts?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_timeseries_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "kpi_meta"
+            referencedColumns: ["kpi_key"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_kpi_payload: {
+        Args: { p_kpi_key: string; p_range: string }
+        Returns: Json
+      }
+      kpi_latest_categories: {
+        Args: { p_kpi_key: string }
+        Returns: {
+          category: string
+          series: string
+          value: number
+        }[]
+      }
+      kpi_latest_heatmap: {
+        Args: { p_kpi_key: string }
+        Returns: {
+          value: number
+          x_label: string
+          y_label: string
+        }[]
+      }
+      kpi_latest_table: {
+        Args: { p_kpi_key: string }
+        Returns: {
+          row_data: Json
+        }[]
+      }
+      kpi_timeseries_bucketed: {
+        Args: { p_kpi_key: string; p_range: string }
+        Returns: {
+          bucket: string
+          series: string
+          value: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
