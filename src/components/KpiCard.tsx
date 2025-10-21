@@ -20,6 +20,7 @@ export type KpiRange = "1D" | "1W" | "2W" | "1M" | "6M" | "1Y";
 
 export type KpiCardProps = {
   kpiKey: string;
+  useLiveData?: boolean; // Toggle to use Supabase data vs static data
   name: string;
   description?: string;
   definition?: string;
