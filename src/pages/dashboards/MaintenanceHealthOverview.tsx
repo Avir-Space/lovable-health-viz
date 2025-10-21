@@ -1,5 +1,14 @@
 import { maintenanceKPIs, dataSources } from "@/data/maintenanceKPIs";
-import { KpiCard } from "@/components/KpiCard";
+import { KPICard } from "@/components/dashboard/KPICard";
+import { GaugeChart } from "@/components/dashboard/charts/GaugeChart";
+import { TableChart } from "@/components/dashboard/charts/TableChart";
+import { LineChart } from "@/components/dashboard/charts/LineChart";
+import { BarChart } from "@/components/dashboard/charts/BarChart";
+import { PieChart } from "@/components/dashboard/charts/PieChart";
+import { HeatmapChart } from "@/components/dashboard/charts/HeatmapChart";
+import { DeltaChart } from "@/components/dashboard/charts/DeltaChart";
+import { NumericChart } from "@/components/dashboard/charts/NumericChart";
+import { TimelineChart } from "@/components/dashboard/charts/TimelineChart";
 
 const getSourcesForKPI = (key: string): string[] => {
   const mroSources = ["AMOS", "TRAX"];
@@ -25,6 +34,90 @@ const aiSuggestions: Record<string, string> = {
 };
 
 export default function MaintenanceHealthOverview() {
+  const renderChart = (kpi: typeof maintenanceKPIs[0]) => {
+    const xKey = kpi.columns[0];
+    const yKey = kpi.columns[1];
+
+    switch (kpi.variant) {
+      case "gauge":
+        return <GaugeChart data={kpi.data} xKey={xKey} yKey={yKey} />;
+      
+      case "table":
+        return <TableChart data={kpi.data} columns={kpi.columns} />;
+      
+      case "line":
+        return (
+          <LineChart
+            data={kpi.data}
+            xKey={xKey}
+            yKey={yKey}
+            xLabel={kpi.xAxis}
+            yLabel={kpi.yAxis}
+          />
+        );
+      
+      case "line+numeric":
+        const additionalKeys = kpi.columns.slice(2);
+        return (
+          <LineChart
+            data={kpi.data}
+            xKey={xKey}
+            yKey={yKey}
+            xLabel={kpi.xAxis}
+            yLabel={kpi.yAxis}
+            additionalKeys={additionalKeys}
+            secondYAxis={true}
+            secondYAxisLabel="AOG Minutes (7 day avg)"
+          />
+        );
+      
+      case "bar":
+        return (
+          <BarChart
+            data={kpi.data}
+            xKey={xKey}
+            yKey={yKey}
+            xLabel={kpi.xAxis}
+            yLabel={kpi.yAxis}
+          />
+        );
+      
+      case "pie":
+        return <PieChart data={kpi.data} xKey={xKey} yKey={yKey} />;
+      
+      case "heatmap":
+        return (
+          <HeatmapChart
+            data={kpi.data}
+            xKey={xKey}
+            yKey={yKey}
+            xLabel={kpi.xAxis}
+            yLabel={kpi.yAxis}
+          />
+        );
+      
+      case "delta":
+        return <DeltaChart data={kpi.data} xKey={xKey} yKey={yKey} />;
+      
+      case "numeric":
+        return <NumericChart data={kpi.data} yKey={yKey} />;
+      
+      case "timeline":
+        return (
+          <TimelineChart
+            data={kpi.data}
+            xKey={xKey}
+            yKey={yKey}
+            xLabel={kpi.xAxis}
+            yLabel={kpi.yAxis}
+          />
+        );
+      
+      default:
+        return <div className="text-muted-foreground">Chart type not implemented</div>;
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -36,27 +129,14 @@ export default function MaintenanceHealthOverview() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {maintenanceKPIs.map((kpi) => (
-          <KpiCard
+          <KPICard
             key={kpi.key}
-            kpiKey={kpi.key}
-            name={kpi.name}
-            sources={getSourcesForKPI(kpi.key).map(s => ({ name: s }))}
-            lastSyncedAt="Synced a few seconds ago"
-            variant={kpi.variant as any}
-            xAxis={kpi.xAxis}
-            yAxis={kpi.yAxis}
-            data={kpi.data}
-            columns={kpi.columns}
-            aiInsight={aiSuggestions[kpi.key]}
-            details={{
-              why: aiSuggestions[kpi.key] || "System-generated recommendation.",
-              evidence: [],
-              ifIgnored: "Risk remains for this KPI.",
-              ifExecuted: "Expected uplift in KPI performance.",
-              confidence: 0.8,
-              provenance: getSourcesForKPI(kpi.key),
-            }}
-          />
+            title={kpi.name}
+            sources={getSourcesForKPI(kpi.key)}
+            aiSuggestion={aiSuggestions[kpi.key]}
+          >
+            {renderChart(kpi)}
+          </KPICard>
         ))}
       </div>
     </div>
