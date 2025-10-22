@@ -3,16 +3,32 @@ import { supabase } from '@/integrations/supabase/client';
 
 export type KpiRange = '1D' | '1W' | '2W' | '1M' | '6M' | '1Y';
 
-interface KpiPayload {
+export interface KpiPayload {
   kpi_key: string;
   name: string;
   variant: string;
   xAxis?: string;
   yAxis?: string;
   unit?: string;
-  config?: any;
-  data?: any[];
+  config?: {
+    dualAxis?: {
+      seriesMap: Record<string, number>;
+      rightAxisName?: string;
+      rightAxisUnit?: string;
+    };
+    [key: string]: any;
+  };
+  data?: Array<{
+    bucket?: string;
+    ts?: string;
+    category?: string;
+    series?: string;
+    value: number;
+    x?: string;
+    y?: string;
+  }>;
   rows?: any[];
+  generated_at?: string;
 }
 
 const fetchKpiPayload = async (kpiKey: string, range: KpiRange): Promise<KpiPayload | null> => {
@@ -22,33 +38,35 @@ const fetchKpiPayload = async (kpiKey: string, range: KpiRange): Promise<KpiPayl
   });
 
   if (error) {
-    console.error('Error fetching KPI:', error);
-    throw error;
+    console.error('[Internal] KPI fetch failed:', error);
+    throw new Error('Failed to load dashboard data');
   }
 
-  return data as unknown as KpiPayload;
+  // Add generated_at timestamp if data exists
+  if (!data) return null;
+  return {
+    ...(data as object),
+    generated_at: new Date().toISOString()
+  } as KpiPayload;
 };
 
-export function useKpiData(kpiKey: string, range: KpiRange = '1M') {
-  const { data, error, isLoading, mutate } = useSWR(
-    kpiKey ? ['kpi', kpiKey, range] : null,
+export function useKpiData(kpiKey: string, range: KpiRange = '1M', enabled: boolean = true) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
+    enabled && kpiKey ? ['kpi', kpiKey, range] : null,
     () => fetchKpiPayload(kpiKey, range),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 60000, // 60 second deduplication
+      dedupingInterval: 30000,
     }
   );
-
-  const refresh = async () => {
-    return mutate();
-  };
 
   return {
     payload: data,
     isLoading,
+    isValidating,
     error,
-    refresh,
+    refresh: mutate,
   };
 }
 

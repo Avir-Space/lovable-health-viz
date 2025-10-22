@@ -1,146 +1,40 @@
-import {
-  LineChart as RechartsLineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  Bar,
-  ComposedChart,
-} from "recharts";
+import ReactECharts from "echarts-for-react";
 
 interface LineChartProps {
-  data: Record<string, any>[];
-  xKey: string;
-  yKey: string;
-  xLabel: string;
-  yLabel: string;
-  additionalKeys?: string[];
-  secondYAxis?: boolean;
-  secondYAxisLabel?: string;
+  data: Array<{
+    bucket?: string;
+    ts?: string;
+    series?: string;
+    value: number;
+  }>;
+  unit?: string;
+  xLabel?: string;
+  yLabel?: string;
 }
 
-export function LineChart({ 
-  data, 
-  xKey, 
-  yKey, 
-  xLabel, 
-  yLabel, 
-  additionalKeys = [],
-  secondYAxis = false,
-  secondYAxisLabel
-}: LineChartProps) {
-  // Filter out metadata rows
-  const filteredData = data.filter(item => 
-    typeof item[yKey] === 'number' && 
-    !['KPI Variant', 'Variant Detail', 'Reason to Track'].includes(String(item[xKey]))
-  );
+export function LineChart({ data, unit = "", xLabel = "", yLabel = "" }: LineChartProps) {
+  const seriesMap: Record<string, Array<{ x: string; y: number }>> = {};
   
-  // Check if we need dual Y-axis (for AOG Events chart)
-  const hasDualAxis = secondYAxis && additionalKeys.length > 0;
-  
-  if (hasDualAxis) {
-    return (
-      <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={filteredData} margin={{ top: 5, right: 50, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis
-              dataKey={xKey}
-              label={{ value: xLabel, position: "insideBottom", offset: -5 }}
-              stroke="hsl(var(--muted-foreground))"
-              tick={{ fontSize: 12 }}
-            />
-            <YAxis
-              yAxisId="left"
-              label={{ value: yLabel, angle: -90, position: "insideLeft" }}
-              stroke="hsl(var(--muted-foreground))"
-              tick={{ fontSize: 12 }}
-            />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              label={{ value: secondYAxisLabel || additionalKeys[0], angle: 90, position: "insideRight" }}
-              stroke="hsl(var(--muted-foreground))"
-              tick={{ fontSize: 12 }}
-            />
-            <Tooltip
-              formatter={(value: number) => [typeof value === 'number' ? value.toFixed(2) : value, ""]}
-              contentStyle={{
-                backgroundColor: "hsl(var(--popover))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "var(--radius)",
-              }}
-            />
-            <Legend />
-            <Line
-              yAxisId="left"
-              type="monotone"
-              dataKey={yKey}
-              stroke="hsl(var(--chart-1))"
-              strokeWidth={2}
-              dot={{ fill: "hsl(var(--chart-1))", r: 4 }}
-              activeDot={{ r: 6 }}
-            />
-            <Bar
-              yAxisId="right"
-              dataKey={additionalKeys[additionalKeys.length - 1]}
-              fill="hsl(var(--chart-2))"
-              opacity={0.6}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
-    );
-  }
+  data.forEach(row => {
+    const seriesKey = row.series || 'value';
+    if (!seriesMap[seriesKey]) seriesMap[seriesKey] = [];
+    seriesMap[seriesKey].push({ x: row.bucket || row.ts || '', y: row.value });
+  });
 
-  return (
-    <div className="h-64">
-      <ResponsiveContainer width="100%" height="100%">
-        <RechartsLineChart data={filteredData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-          <XAxis
-            dataKey={xKey}
-            label={{ value: xLabel, position: "insideBottom", offset: -5 }}
-            stroke="hsl(var(--muted-foreground))"
-            tick={{ fontSize: 12 }}
-          />
-          <YAxis
-            label={{ value: yLabel, angle: -90, position: "insideLeft" }}
-            stroke="hsl(var(--muted-foreground))"
-            tick={{ fontSize: 12 }}
-          />
-          <Tooltip
-            formatter={(value: number) => [typeof value === 'number' ? value.toFixed(2) : value, ""]}
-            contentStyle={{
-              backgroundColor: "hsl(var(--popover))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "var(--radius)",
-            }}
-          />
-          {additionalKeys.length > 0 && <Legend />}
-          <Line
-            type="monotone"
-            dataKey={yKey}
-            stroke="hsl(var(--chart-1))"
-            strokeWidth={2}
-            dot={{ fill: "hsl(var(--chart-1))", r: 4 }}
-            activeDot={{ r: 6 }}
-          />
-          {additionalKeys.map((key, idx) => (
-            <Line
-              key={key}
-              type="monotone"
-              dataKey={key}
-              stroke={`hsl(var(--chart-${(idx % 5) + 2}))`}
-              strokeWidth={2}
-              dot={{ fill: `hsl(var(--chart-${(idx % 5) + 2}))`, r: 4 }}
-            />
-          ))}
-        </RechartsLineChart>
-      </ResponsiveContainer>
-    </div>
-  );
+  const firstSeries = Object.values(seriesMap)[0] || [];
+  const xAxisData = firstSeries.map(d => d.x);
+  const seriesConfigs = Object.entries(seriesMap).map(([name, points]) => ({
+    name, type: 'line', smooth: true, showSymbol: true, data: points.map(p => p.y)
+  }));
+
+  const option = {
+    grid: { top: 32, right: 24, bottom: 48, left: 56 },
+    tooltip: { trigger: 'axis' },
+    legend: seriesConfigs.length > 1 ? { bottom: 0 } : undefined,
+    xAxis: { type: 'category', name: xLabel, nameLocation: 'middle', nameGap: 30, data: xAxisData, axisLabel: { rotate: 30, fontSize: 11 } },
+    yAxis: { type: 'value', name: yLabel, nameLocation: 'middle', nameGap: 45, axisLabel: { formatter: (v: number) => `${v}${unit}` } },
+    series: seriesConfigs
+  };
+
+  return <ReactECharts option={option} style={{ height: "280px", width: "100%" }} />;
 }

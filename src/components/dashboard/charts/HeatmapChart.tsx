@@ -1,60 +1,24 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import ReactECharts from "echarts-for-react";
 
 interface HeatmapChartProps {
-  data: Record<string, any>[];
-  xKey: string;
-  yKey: string;
-  xLabel: string;
-  yLabel: string;
+  data: Array<{ x: string; y: string; value: number; }>;
+  xLabel?: string;
+  yLabel?: string;
 }
 
-export function HeatmapChart({ data, xKey, yKey, xLabel, yLabel }: HeatmapChartProps) {
-  // Filter out metadata rows
-  const filteredData = data.filter(item => 
-    typeof item[yKey] === 'number' && 
-    !['KPI Variant', 'Variant Detail', 'Reason to Track'].includes(String(item[xKey]))
-  );
-  
-  const maxValue = Math.max(...filteredData.map((d) => d[yKey]));
+export function HeatmapChart({ data, xLabel = "", yLabel = "" }: HeatmapChartProps) {
+  const xLabels = Array.from(new Set(data.map(d => d.x))).sort();
+  const yLabels = Array.from(new Set(data.map(d => d.y))).sort();
+  const heatmapData = data.map(d => [xLabels.indexOf(d.x), yLabels.indexOf(d.y), d.value]);
+  const values = data.map(d => d.value);
 
-  const getColor = (value: number) => {
-    const intensity = value / maxValue;
-    if (intensity > 0.7) return "hsl(var(--destructive))";
-    if (intensity > 0.3) return "hsl(var(--warning))";
-    return "hsl(var(--success))";
+  const option = {
+    grid: { top: 32, right: 80, bottom: 48, left: 56 },
+    tooltip: { position: 'top' },
+    xAxis: { type: 'category', name: xLabel, data: xLabels, splitArea: { show: true } },
+    yAxis: { type: 'category', name: yLabel, data: yLabels, splitArea: { show: true } },
+    visualMap: { min: Math.min(...values), max: Math.max(...values), calculable: true, orient: 'vertical', right: 0 },
+    series: [{ type: 'heatmap', data: heatmapData, label: { show: true, fontSize: 11 } }]
   };
-
-  return (
-    <div className="h-64">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={filteredData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-          <XAxis
-            dataKey={xKey}
-            label={{ value: xLabel, position: "insideBottom", offset: -5 }}
-            stroke="hsl(var(--muted-foreground))"
-            tick={{ fontSize: 12 }}
-          />
-          <YAxis
-            label={{ value: yLabel, angle: -90, position: "insideLeft" }}
-            stroke="hsl(var(--muted-foreground))"
-            tick={{ fontSize: 12 }}
-          />
-          <Tooltip
-            formatter={(value: number) => [value.toFixed(2), yLabel]}
-            contentStyle={{
-              backgroundColor: "hsl(var(--popover))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "var(--radius)",
-            }}
-          />
-          <Bar dataKey={yKey} radius={[8, 8, 0, 0]}>
-            {filteredData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={getColor(entry[yKey])} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
+  return <ReactECharts option={option} style={{ height: "280px", width: "100%" }} />;
 }

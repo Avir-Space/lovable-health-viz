@@ -11,8 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowUpDown } from "lucide-react";
 
 interface TableChartProps {
-  data: Record<string, any>[];
-  columns: string[];
+  rows: any[];
 }
 
 export function TableChart({ data, columns }: TableChartProps) {
