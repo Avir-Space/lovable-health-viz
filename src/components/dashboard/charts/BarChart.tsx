@@ -23,5 +23,5 @@ export function BarChart({ data, unit = "", xLabel = "", yLabel = "" }: BarChart
     yAxis: { type: 'value', name: yLabel, nameLocation: 'middle', nameGap: 50, axisLabel: { formatter: (v: number) => `${v}${unit}` } },
     series: [{ type: 'bar', data: values }]
   };
-  return <ReactECharts option={option} style={{ height: KPI_CHART_HEIGHT, width: "100%" }} />;
+  return <ReactECharts option={option} style={{ height: 300, width: "100%" }} />;
 }

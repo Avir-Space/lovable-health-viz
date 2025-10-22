@@ -103,5 +103,5 @@ export function DualAxisLine({
     series: seriesConfigs
   };
 
-  return <ReactECharts option={option} style={{ height: KPI_CHART_HEIGHT, width: "100%" }} />;
+  return <ReactECharts option={option} style={{ height: 300, width: "100%" }} />;
 }

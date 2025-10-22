@@ -21,34 +21,16 @@ export interface KpiMeta {
 }
 
 export interface KpiPayload {
-  kpi_key: string;
-  name: string;
-  variant: string;
-  xAxis?: string;
-  yAxis?: string;
-  unit?: string;
-  config?: {
-    dualAxis?: {
-      seriesMap: Record<string, 0 | 1>;
-      rightAxisName?: string;
-      rightAxisUnit?: string;
-    };
-    [key: string]: any;
-  };
-  data?: Array<{
-    bucket?: string;
-    ts?: string;
-    category?: string;
-    series?: string;
-    value: number;
-    x?: string;
-    y?: string;
-  }>;
-  rows?: any[];
+  meta: KpiMeta;
+  timeseries?: Array<{ ts: string; bucket?: string; series?: string; value: number }>;
+  latest?: { ts: string; value: number; series?: string };
+  categories?: Array<{ category: string; series?: string; value: number }>;
+  heatmap?: Array<{ x: string; y: string; value: number }>;
+  tableRows?: Array<Record<string, any>>;
   generated_at?: string;
 }
 
-const fetchKpiPayload = async (kpiKey: string, range: KpiRange): Promise<KpiPayload | null> => {
+async function fetchKpiPayload(kpiKey: string, range: KpiRange): Promise<KpiPayload | null> {
   if (!kpiKey) return null;
   
   const { data, error } = await supabase.rpc('get_kpi_payload', {
@@ -68,7 +50,7 @@ const fetchKpiPayload = async (kpiKey: string, range: KpiRange): Promise<KpiPayl
     ...payload,
     generated_at: payload?.generated_at ?? new Date().toISOString()
   } as KpiPayload;
-};
+}
 
 export function useKpiData(kpiKey: string, range: KpiRange = '1M', enabled: boolean = true) {
   const { data, error, isLoading, isValidating, mutate } = useSWR(

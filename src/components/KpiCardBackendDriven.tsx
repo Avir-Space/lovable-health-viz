@@ -63,11 +63,9 @@ export function KpiCardBackendDriven({
       );
     }
 
-    let unit = kpiMeta.unit ?? '';
+    const unit = kpiMeta.unit ?? '';
     const xLabel = kpiMeta.x_axis ?? '';
     const yLabel = kpiMeta.y_axis ?? '';
-    
-    // Normalize percent values
     const isPercent = unit === '%' || unit.toLowerCase().includes('percent');
 
     // Dual-axis special case
@@ -75,7 +73,7 @@ export function KpiCardBackendDriven({
       const cfg = kpiMeta.config.dualAxis;
       return (
         <DualAxisLine
-          data={payload.data || []}
+          data={payload.timeseries || []}
           seriesMap={cfg.seriesMap}
           rightAxisName={cfg.rightAxisName}
           unitLeft={unit}
@@ -90,31 +88,29 @@ export function KpiCardBackendDriven({
       case 'line':
       case 'sparkline':
       case 'timeline':
-        return <LineChart data={payload.data || []} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
+        return <LineChart data={payload.timeseries || []} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
 
       case 'gauge':
-        let gaugeValue = payload.data?.[payload.data.length - 1]?.value || 0;
-        if (isPercent) gaugeValue = normalizePercent(gaugeValue);
+        const gaugeValue = isPercent ? normalizePercent(payload.latest?.value) : (payload.latest?.value ?? 0);
         return <GaugeChart value={gaugeValue} unit={unit || '%'} />;
 
       case 'numeric':
-        let numericValue = payload.data?.[payload.data.length - 1]?.value || 0;
-        if (isPercent) numericValue = normalizePercent(numericValue);
+        const numericValue = isPercent ? normalizePercent(payload.latest?.value) : (payload.latest?.value ?? 0);
         return <NumericChart value={numericValue} unit={unit} label={kpiMeta.name} />;
 
       case 'delta':
       case 'bar':
       case 'column':
-        return <BarChart data={(payload.data || []) as Array<{ category: string; value: number }>} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
+        return <BarChart data={payload.categories || []} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
 
       case 'pie':
-        return <PieChart data={(payload.data || []) as Array<{ category: string; value: number }>} unit={unit} />;
+        return <PieChart data={payload.categories || []} unit={unit} />;
 
       case 'heatmap':
-        return <HeatmapChart data={(payload.data || []) as Array<{ x: string; y: string; value: number }>} xLabel={xLabel} yLabel={yLabel} />;
+        return <HeatmapChart data={payload.heatmap || []} xLabel={xLabel} yLabel={yLabel} />;
 
       case 'table':
-        return <TableChart rows={payload.rows || []} />;
+        return <TableChart rows={payload.tableRows || []} />;
 
       default:
         return <div className="h-[300px] flex items-center justify-center text-muted-foreground">No renderer</div>;
