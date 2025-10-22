@@ -1,4 +1,5 @@
 import ReactECharts from "echarts-for-react";
+import { KPI_CHART_HEIGHT } from "@/lib/kpi-utils";
 
 interface PieChartProps {
   data: Array<{ category: string; series?: string; value: number; }>;
@@ -22,5 +23,5 @@ export function PieChart({ data, unit = "" }: PieChartProps) {
       label: { show: true }
     }]
   };
-  return <ReactECharts option={option} style={{ height: "260px", width: "100%" }} />;
+  return <ReactECharts option={option} style={{ height: KPI_CHART_HEIGHT, width: "100%" }} />;
 }

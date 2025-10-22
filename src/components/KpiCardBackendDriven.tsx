@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Clock, RefreshCw, Loader2 } from "lucide-react";
-import { useKpiData, KpiRange, type KpiMeta } from "@/hooks/useKpiData";
+import { useKpiData, type KpiMeta } from "@/hooks/useKpiData";
 import { LineChart } from "./dashboard/charts/LineChart";
 import { BarChart } from "./dashboard/charts/BarChart";
 import { PieChart } from "./dashboard/charts/PieChart";
@@ -14,8 +14,7 @@ import { HeatmapChart } from "./dashboard/charts/HeatmapChart";
 import { TableChart } from "./dashboard/charts/TableChart";
 import { DualAxisLine } from "./dashboard/charts/DualAxisLine";
 import { formatDistanceToNow } from "date-fns";
-
-const TIME_SERIES_VARIANTS = ['line', 'gauge', 'numeric', 'delta', 'sparkline', 'timeline'];
+import { TIME_SERIES_VARIANTS, KPI_RANGES, normalizePercent, type KpiRange } from "@/lib/kpi-utils";
 
 interface KpiCardBackendDrivenProps {
   kpiMeta: KpiMeta;
@@ -32,9 +31,9 @@ export function KpiCardBackendDriven({
 }: KpiCardBackendDrivenProps) {
   const [selectedRange, setSelectedRange] = useState<KpiRange>(defaultRange);
   
-  const isTimeSeries = TIME_SERIES_VARIANTS.includes(kpiMeta.variant) || !!kpiMeta.config?.dualAxis;
+  const isTimeSeries = TIME_SERIES_VARIANTS.has(kpiMeta.variant) || !!kpiMeta.config?.dualAxis;
   
-  const { payload, isValidating, error, refresh } = useKpiData(
+  const { payload, isLoading, isValidating, error, refresh } = useKpiData(
     kpiMeta.kpi_key,
     selectedRange,
     useLiveData
@@ -49,13 +48,13 @@ export function KpiCardBackendDriven({
   };
 
   const renderChart = () => {
-    if (!payload) {
-      return <div className="h-[220px] flex items-center justify-center text-muted-foreground">Loading...</div>;
+    if (isLoading || !payload) {
+      return <div className="h-[300px] flex items-center justify-center text-muted-foreground">Loading...</div>;
     }
 
     if (error) {
       return (
-        <div className="h-[220px] flex flex-col items-center justify-center gap-2">
+        <div className="h-[300px] flex flex-col items-center justify-center gap-2">
           <div className="text-sm text-destructive">Failed to load data</div>
           <Button size="sm" variant="outline" onClick={() => refresh()}>
             Retry
@@ -64,9 +63,12 @@ export function KpiCardBackendDriven({
       );
     }
 
-    const unit = kpiMeta.unit ?? '';
+    let unit = kpiMeta.unit ?? '';
     const xLabel = kpiMeta.x_axis ?? '';
     const yLabel = kpiMeta.y_axis ?? '';
+    
+    // Normalize percent values
+    const isPercent = unit === '%' || unit.toLowerCase().includes('percent');
 
     // Dual-axis special case
     if (kpiMeta.config?.dualAxis) {
@@ -91,11 +93,13 @@ export function KpiCardBackendDriven({
         return <LineChart data={payload.data || []} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
 
       case 'gauge':
-        const gaugeValue = payload.data?.[payload.data.length - 1]?.value || 0;
-        return <GaugeChart value={gaugeValue} unit={unit} />;
+        let gaugeValue = payload.data?.[payload.data.length - 1]?.value || 0;
+        if (isPercent) gaugeValue = normalizePercent(gaugeValue);
+        return <GaugeChart value={gaugeValue} unit={unit || '%'} />;
 
       case 'numeric':
-        const numericValue = payload.data?.[payload.data.length - 1]?.value || 0;
+        let numericValue = payload.data?.[payload.data.length - 1]?.value || 0;
+        if (isPercent) numericValue = normalizePercent(numericValue);
         return <NumericChart value={numericValue} unit={unit} label={kpiMeta.name} />;
 
       case 'delta':
@@ -113,12 +117,12 @@ export function KpiCardBackendDriven({
         return <TableChart rows={payload.rows || []} />;
 
       default:
-        return <div className="h-[220px] flex items-center justify-center text-muted-foreground">No renderer</div>;
+        return <div className="h-[300px] flex items-center justify-center text-muted-foreground">No renderer</div>;
     }
   };
 
   const syncedTime = payload?.generated_at 
-    ? `Synced ${formatDistanceToNow(new Date(payload.generated_at), { addSuffix: true })}`
+    ? `Synced ${new Date(payload.generated_at).toLocaleTimeString()}`
     : 'Not synced';
 
   return (
@@ -161,7 +165,7 @@ export function KpiCardBackendDriven({
         {/* Time Range Selector - Only for time-series KPIs */}
         {isTimeSeries && (
           <div className="flex items-center gap-2 flex-wrap">
-            {(['1D', '1W', '2W', '1M', '6M', '1Y'] as KpiRange[]).map(range => (
+            {KPI_RANGES.map(range => (
               <Button
                 key={range}
                 size="sm"

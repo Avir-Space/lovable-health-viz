@@ -1,4 +1,5 @@
 import ReactECharts from "echarts-for-react";
+import { formatXAxisDateLabel, KPI_CHART_HEIGHT } from "@/lib/kpi-utils";
 
 interface DualAxisLineProps {
   data: Array<{
@@ -39,6 +40,7 @@ export function DualAxisLine({
 
   const firstSeriesKey = Object.keys(bySeries)[0];
   const xAxisData = bySeries[firstSeriesKey]?.map(d => d.x) || [];
+  const formattedXAxis = xAxisData.map(formatXAxisDateLabel);
 
   const seriesConfigs = Object.entries(bySeries).map(([seriesKey, points]) => {
     const axisIndex = seriesMap[seriesKey] ?? 0;
@@ -53,7 +55,7 @@ export function DualAxisLine({
   });
 
   const option = {
-    grid: { top: 40, right: 60, bottom: 48, left: 60 },
+    grid: { top: 40, right: 64, bottom: 58, left: 64 },
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'cross' },
@@ -75,8 +77,8 @@ export function DualAxisLine({
       name: xLabel,
       nameLocation: 'middle',
       nameGap: 30,
-      data: xAxisData,
-      axisLabel: { rotate: 30, fontSize: 11 }
+      data: formattedXAxis,
+      axisLabel: { rotate: 18, fontSize: 11 }
     },
     yAxis: [
       {
@@ -101,5 +103,5 @@ export function DualAxisLine({
     series: seriesConfigs
   };
 
-  return <ReactECharts option={option} style={{ height: "280px", width: "100%" }} />;
+  return <ReactECharts option={option} style={{ height: KPI_CHART_HEIGHT, width: "100%" }} />;
 }

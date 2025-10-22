@@ -1,4 +1,5 @@
 import ReactECharts from "echarts-for-react";
+import { KPI_CHART_HEIGHT } from "@/lib/kpi-utils";
 
 interface GaugeChartProps {
   value: number;
@@ -22,5 +23,5 @@ export function GaugeChart({ value, unit = "%", max = 100 }: GaugeChartProps) {
       data: [{ value }] 
     }]
   };
-  return <ReactECharts option={option} style={{ height: "260px", width: "100%" }} />;
+  return <ReactECharts option={option} style={{ height: KPI_CHART_HEIGHT, width: "100%" }} />;
 }

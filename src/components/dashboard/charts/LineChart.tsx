@@ -1,4 +1,5 @@
 import ReactECharts from "echarts-for-react";
+import { formatXAxisDateLabel, KPI_CHART_HEIGHT } from "@/lib/kpi-utils";
 
 interface LineChartProps {
   data: Array<{
@@ -27,8 +28,10 @@ export function LineChart({ data, unit = "", xLabel = "", yLabel = "" }: LineCha
     name, type: 'line', smooth: true, showSymbol: true, data: points.map(p => p.y)
   }));
 
+  const formattedXAxis = xAxisData.map(formatXAxisDateLabel);
+  
   const option = {
-    grid: { top: 32, right: 24, bottom: 48, left: 56 },
+    grid: { top: 32, right: 24, bottom: 58, left: 64 },
     tooltip: { 
       trigger: 'axis',
       formatter: (params: any) => {
@@ -40,10 +43,10 @@ export function LineChart({ data, unit = "", xLabel = "", yLabel = "" }: LineCha
       }
     },
     legend: seriesConfigs.length > 1 ? { bottom: 0 } : undefined,
-    xAxis: { type: 'category', name: xLabel, nameLocation: 'middle', nameGap: 30, data: xAxisData, axisLabel: { rotate: 30, fontSize: 11 } },
-    yAxis: { type: 'value', name: yLabel, nameLocation: 'middle', nameGap: 45, axisLabel: { formatter: (v: number) => `${v}${unit}` } },
+    xAxis: { type: 'category', name: xLabel, nameLocation: 'middle', nameGap: 30, data: formattedXAxis, axisLabel: { rotate: 18, fontSize: 11 } },
+    yAxis: { type: 'value', name: yLabel, nameLocation: 'middle', nameGap: 50, axisLabel: { formatter: (v: number) => `${v}${unit}` } },
     series: seriesConfigs
   };
 
-  return <ReactECharts option={option} style={{ height: "260px", width: "100%" }} />;
+  return <ReactECharts option={option} style={{ height: KPI_CHART_HEIGHT, width: "100%" }} />;
 }

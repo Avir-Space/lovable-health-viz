@@ -1,5 +1,6 @@
-import { useDashboardKpis, type KpiRange } from "@/hooks/useKpiData";
+import { useDashboardKpis } from "@/hooks/useKpiData";
 import { KpiCardBackendDriven } from "@/components/KpiCardBackendDriven";
+import type { KpiRange } from "@/lib/kpi-utils";
 
 interface DashboardPageProps {
   dashboard: string;
@@ -34,12 +35,12 @@ export default function DashboardPage({
       )}
 
       {!isLoading && !error && kpis.length === 0 && (
-        <div className="text-sm text-muted-foreground">
-          No KPIs found for dashboard <code className="px-1 py-0.5 bg-muted rounded">{dashboard}</code>.
+        <div className="text-sm text-muted-foreground p-8 text-center border rounded-lg">
+          No KPIs configured for dashboard <code className="px-1 py-0.5 bg-muted rounded font-mono">{dashboard}</code>.
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {kpis.map(meta => (
           <KpiCardBackendDriven 
             key={meta.kpi_key} 

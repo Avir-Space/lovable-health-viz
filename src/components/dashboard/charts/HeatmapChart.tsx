@@ -1,4 +1,5 @@
 import ReactECharts from "echarts-for-react";
+import { KPI_CHART_HEIGHT } from "@/lib/kpi-utils";
 
 interface HeatmapChartProps {
   data: Array<{ x: string; y: string; value: number; }>;
@@ -20,5 +21,5 @@ export function HeatmapChart({ data, xLabel = "", yLabel = "" }: HeatmapChartPro
     visualMap: { min: Math.min(...values), max: Math.max(...values), calculable: true, orient: 'vertical', right: 0 },
     series: [{ type: 'heatmap', data: heatmapData, label: { show: true, fontSize: 11 } }]
   };
-  return <ReactECharts option={option} style={{ height: "260px", width: "100%" }} />;
+  return <ReactECharts option={option} style={{ height: KPI_CHART_HEIGHT, width: "100%" }} />;
 }

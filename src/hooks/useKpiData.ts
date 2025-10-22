@@ -1,7 +1,6 @@
 import useSWR from 'swr';
 import { supabase } from '@/integrations/supabase/client';
-
-export type KpiRange = '1D' | '1W' | '2W' | '1M' | '6M' | '1Y';
+import type { KpiRange } from '@/lib/kpi-utils';
 
 export interface KpiMeta {
   kpi_key: string;
@@ -50,14 +49,16 @@ export interface KpiPayload {
 }
 
 const fetchKpiPayload = async (kpiKey: string, range: KpiRange): Promise<KpiPayload | null> => {
+  if (!kpiKey) return null;
+  
   const { data, error } = await supabase.rpc('get_kpi_payload', {
     p_kpi_key: kpiKey,
     p_range: range
   });
 
   if (error) {
-    console.error('[Internal] KPI fetch failed:', error);
-    throw new Error('Failed to load dashboard data');
+    console.error('[KPI] Fetch failed:', error);
+    throw new Error('Failed to load KPI data');
   }
 
   if (!data) return null;
@@ -77,11 +78,12 @@ export function useKpiData(kpiKey: string, range: KpiRange = '1M', enabled: bool
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
       dedupingInterval: 30000,
+      keepPreviousData: true,
     }
   );
 
   return {
-    payload: data,
+    payload: data ?? null,
     isLoading,
     isValidating,
     error,
