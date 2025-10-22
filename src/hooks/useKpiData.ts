@@ -3,6 +3,24 @@ import { supabase } from '@/integrations/supabase/client';
 
 export type KpiRange = '1D' | '1W' | '2W' | '1M' | '6M' | '1Y';
 
+export interface KpiMeta {
+  kpi_key: string;
+  dashboard: string;
+  name: string;
+  variant: 'line' | 'gauge' | 'numeric' | 'delta' | 'sparkline' | 'timeline' | 'bar' | 'column' | 'pie' | 'heatmap' | 'table';
+  unit?: string;
+  x_axis?: string;
+  y_axis?: string;
+  config?: {
+    dualAxis?: {
+      seriesMap: Record<string, 0 | 1>;
+      rightAxisName?: string;
+      rightAxisUnit?: string;
+    };
+    [key: string]: any;
+  };
+}
+
 export interface KpiPayload {
   kpi_key: string;
   name: string;
@@ -43,16 +61,18 @@ const fetchKpiPayload = async (kpiKey: string, range: KpiRange): Promise<KpiPayl
   }
 
   if (!data) return null;
+  
+  const payload = data as any;
   return {
-    ...(data as object),
-    generated_at: new Date().toISOString()
+    ...payload,
+    generated_at: payload?.generated_at ?? new Date().toISOString()
   } as KpiPayload;
 };
 
 export function useKpiData(kpiKey: string, range: KpiRange = '1M', enabled: boolean = true) {
   const { data, error, isLoading, isValidating, mutate } = useSWR(
-    enabled && kpiKey ? ['kpi', kpiKey, range] : null,
-    () => fetchKpiPayload(kpiKey, range),
+    enabled && kpiKey ? ['kpi', kpiKey, range] as const : null,
+    ([, k, r]) => fetchKpiPayload(k, r),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
@@ -69,19 +89,21 @@ export function useKpiData(kpiKey: string, range: KpiRange = '1M', enabled: bool
   };
 }
 
-// Hook to fetch dashboard KPIs
 export function useDashboardKpis(dashboard: string) {
   const { data, error, isLoading } = useSWR(
     dashboard ? ['dashboard-kpis', dashboard] : null,
     async () => {
       const { data, error } = await supabase
         .from('kpi_meta')
-        .select('kpi_key, name, variant, x_axis, y_axis, unit, config')
+        .select('kpi_key, dashboard, name, variant, x_axis, y_axis, unit, config')
         .eq('dashboard', dashboard)
         .order('kpi_key');
 
       if (error) throw error;
-      return data;
+      if (!data || data.length === 0) {
+        console.warn(`[kpi_meta] No KPIs found for dashboard: ${dashboard}`);
+      }
+      return data as KpiMeta[];
     },
     {
       revalidateOnFocus: false,

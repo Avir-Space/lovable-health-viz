@@ -3,11 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Progress } from "@/components/ui/progress";
-import { Clock, RefreshCw, Info, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useKpiData, KpiRange } from "@/hooks/useKpiData";
+import { Clock, RefreshCw, Loader2 } from "lucide-react";
+import { useKpiData, KpiRange, type KpiMeta } from "@/hooks/useKpiData";
 import { LineChart } from "./dashboard/charts/LineChart";
 import { BarChart } from "./dashboard/charts/BarChart";
 import { PieChart } from "./dashboard/charts/PieChart";
@@ -18,44 +15,23 @@ import { TableChart } from "./dashboard/charts/TableChart";
 import { DualAxisLine } from "./dashboard/charts/DualAxisLine";
 import { formatDistanceToNow } from "date-fns";
 
-export type KpiSource = { name: string };
-export type KpiMeta = {
-  kpi_key: string;
-  name: string;
-  variant: string;
-  unit?: string;
-  x_axis?: string;
-  y_axis?: string;
-  config?: any;
-};
+const TIME_SERIES_VARIANTS = ['line', 'gauge', 'numeric', 'delta', 'sparkline', 'timeline'];
 
 interface KpiCardBackendDrivenProps {
   kpiMeta: KpiMeta;
-  sources?: KpiSource[];
+  sources?: Array<{ name: string }>;
   useLiveData?: boolean;
   defaultRange?: KpiRange;
-  aiInsight?: string;
-  details?: {
-    why: string;
-    evidence: any[];
-    confidence?: number;
-    provenance?: string[];
-  };
 }
-
-const TIME_SERIES_VARIANTS = ['line', 'gauge', 'numeric', 'delta', 'sparkline', 'timeline'];
 
 export function KpiCardBackendDriven({
   kpiMeta,
   sources = [],
   useLiveData = true,
   defaultRange = '1M',
-  aiInsight,
-  details
 }: KpiCardBackendDrivenProps) {
   const [selectedRange, setSelectedRange] = useState<KpiRange>(defaultRange);
   
-  // Determine if this KPI shows time-range chips
   const isTimeSeries = TIME_SERIES_VARIANTS.includes(kpiMeta.variant) || !!kpiMeta.config?.dualAxis;
   
   const { payload, isValidating, error, refresh } = useKpiData(
@@ -123,8 +99,6 @@ export function KpiCardBackendDriven({
         return <NumericChart value={numericValue} unit={unit} label={kpiMeta.name} />;
 
       case 'delta':
-        return <BarChart data={(payload.data || []) as Array<{ category: string; value: number }>} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
-
       case 'bar':
       case 'column':
         return <BarChart data={(payload.data || []) as Array<{ category: string; value: number }>} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
@@ -206,48 +180,8 @@ export function KpiCardBackendDriven({
       </div>
 
       {/* Footer */}
-      <div className="px-4 pb-4 space-y-3">
-        <div>
-          <div className="text-base font-semibold">{kpiMeta.name}</div>
-        </div>
-
-        {/* AI Insight */}
-        {aiInsight && (
-          <div className="rounded-lg bg-muted/50 p-3 space-y-2">
-            <div className="text-xs font-medium text-muted-foreground">AI Insight</div>
-            <div className="text-sm">{aiInsight}</div>
-            {details && (
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 text-xs">
-                    <Info className="h-3.5 w-3.5 mr-1.5" />
-                    View Details
-                  </Button>
-                </SheetTrigger>
-                <SheetContent className="w-[500px] overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle>Explainability</SheetTitle>
-                  </SheetHeader>
-                  <div className="space-y-4 mt-6">
-                    <div>
-                      <h4 className="text-sm font-semibold mb-2">Why this suggestion?</h4>
-                      <p className="text-sm text-muted-foreground">{details.why}</p>
-                    </div>
-                    {details.confidence && (
-                      <div>
-                        <h4 className="text-sm font-semibold mb-2">Confidence</h4>
-                        <Progress value={details.confidence * 100} className="h-2" />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {(details.confidence * 100).toFixed(0)}% confidence
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
-            )}
-          </div>
-        )}
+      <div className="px-4 pb-4">
+        <div className="text-base font-semibold">{kpiMeta.name}</div>
       </div>
     </Card>
   );
