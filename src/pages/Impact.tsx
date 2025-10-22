@@ -6,15 +6,21 @@ import { impactKPIs } from "@/data/impactKPIs";
 
 export default function Impact() {
   const renderChart = (kpi: any) => {
-    const { variant, data, xAxis, yAxis, columns } = kpi;
+    const { variant, data, xAxis, yAxis } = kpi;
+
+    // Transform old data format to new format
+    const transformedData = data?.map((item: any) => ({
+      bucket: item.month || item.date || '',
+      value: item.reduction || item.value || 0,
+      category: item.category || ''
+    })) || [];
 
     switch (variant) {
       case "line":
         return (
           <LineChart
-            data={data}
-            xKey={columns[0]}
-            yKey={columns[1]}
+            data={transformedData}
+            unit=""
             xLabel={xAxis}
             yLabel={yAxis}
           />
@@ -22,9 +28,8 @@ export default function Impact() {
       case "bar":
         return (
           <BarChart
-            data={data}
-            xKey={columns[0]}
-            yKey={columns[1]}
+            data={transformedData}
+            unit=""
             xLabel={xAxis}
             yLabel={yAxis}
           />

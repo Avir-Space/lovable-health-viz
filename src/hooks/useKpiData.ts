@@ -12,7 +12,7 @@ export interface KpiPayload {
   unit?: string;
   config?: {
     dualAxis?: {
-      seriesMap: Record<string, number>;
+      seriesMap: Record<string, 0 | 1>;
       rightAxisName?: string;
       rightAxisUnit?: string;
     };
@@ -42,7 +42,6 @@ const fetchKpiPayload = async (kpiKey: string, range: KpiRange): Promise<KpiPayl
     throw new Error('Failed to load dashboard data');
   }
 
-  // Add generated_at timestamp if data exists
   if (!data) return null;
   return {
     ...(data as object),

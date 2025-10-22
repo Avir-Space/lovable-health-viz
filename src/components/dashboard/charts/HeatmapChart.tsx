@@ -20,5 +20,5 @@ export function HeatmapChart({ data, xLabel = "", yLabel = "" }: HeatmapChartPro
     visualMap: { min: Math.min(...values), max: Math.max(...values), calculable: true, orient: 'vertical', right: 0 },
     series: [{ type: 'heatmap', data: heatmapData, label: { show: true, fontSize: 11 } }]
   };
-  return <ReactECharts option={option} style={{ height: "280px", width: "100%" }} />;
+  return <ReactECharts option={option} style={{ height: "260px", width: "100%" }} />;
 }

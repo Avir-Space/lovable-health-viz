@@ -6,17 +6,21 @@ interface PieChartProps {
 }
 
 export function PieChart({ data, unit = "" }: PieChartProps) {
-  const chartData = data.map(d => ({ name: d.category, value: d.value }));
-  const total = chartData.reduce((sum, item) => sum + item.value, 0);
+  const seriesData = data.map(d => ({ name: d.category, value: d.value }));
+  const total = seriesData.reduce((sum, item) => sum + item.value, 0);
 
   const option = {
-    tooltip: { trigger: 'item' },
+    tooltip: { 
+      trigger: 'item',
+      formatter: (params: any) => `${params.name}<br/>${params.marker} ${params.value}${unit} (${((params.value / total) * 100).toFixed(1)}%)`
+    },
     legend: { bottom: 0, left: 'center' },
     series: [{
-      type: 'pie', radius: ['55%', '75%'], avoidLabelOverlap: true,
-      label: { formatter: (p: any) => `{b|${p.name}}\n{c|${p.value}${unit}} ({d|${((p.value/total)*100).toFixed(1)}%})` },
-      data: chartData
+      type: 'pie', 
+      radius: ['55%', '75%'], 
+      data: seriesData,
+      label: { show: true }
     }]
   };
-  return <ReactECharts option={option} style={{ height: "280px", width: "100%" }} />;
+  return <ReactECharts option={option} style={{ height: "260px", width: "100%" }} />;
 }

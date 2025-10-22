@@ -7,7 +7,7 @@ interface DualAxisLineProps {
     series?: string;
     value: number;
   }>;
-  seriesMap: Record<string, number>; // e.g., { "value": 0, "minutes_7d": 1 }
+  seriesMap: Record<string, 0 | 1>;
   rightAxisName?: string;
   unitLeft?: string;
   unitRight?: string;
@@ -24,27 +24,24 @@ export function DualAxisLine({
   xLabel = "",
   yLabel = ""
 }: DualAxisLineProps) {
-  // Group data by series
-  const seriesData: Record<string, Array<{ x: string; y: number }>> = {};
+  const bySeries: Record<string, Array<{ x: string; y: number }>> = {};
   
   data.forEach(row => {
     const seriesKey = row.series || 'value';
-    if (!seriesData[seriesKey]) {
-      seriesData[seriesKey] = [];
+    if (!bySeries[seriesKey]) {
+      bySeries[seriesKey] = [];
     }
-    seriesData[seriesKey].push({
+    bySeries[seriesKey].push({
       x: row.bucket || row.ts || '',
       y: row.value
     });
   });
 
-  // Build x-axis data (use first series as reference)
-  const firstSeriesKey = Object.keys(seriesData)[0];
-  const xAxisData = seriesData[firstSeriesKey]?.map(d => d.x) || [];
+  const firstSeriesKey = Object.keys(bySeries)[0];
+  const xAxisData = bySeries[firstSeriesKey]?.map(d => d.x) || [];
 
-  // Build series configurations
-  const seriesConfigs = Object.entries(seriesData).map(([seriesKey, points]) => {
-    const axisIndex = seriesMap[seriesKey] || 0;
+  const seriesConfigs = Object.entries(bySeries).map(([seriesKey, points]) => {
+    const axisIndex = seriesMap[seriesKey] ?? 0;
     return {
       name: seriesKey === 'value' ? yLabel : rightAxisName || seriesKey,
       type: axisIndex === 0 ? 'line' : 'bar',

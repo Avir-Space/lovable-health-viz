@@ -14,13 +14,6 @@ const getSourcesForKPI = (key: string): string[] => {
   return ["AMOS"];
 };
 
-const aiSuggestions: Record<string, string> = {
-  fleet_airworthiness_pct: "Fleet airworthiness is strong. Consider proactive maintenance strategies.",
-  aog_events_count_and_minutes: "Monitor AOG trends across stations for pattern detection.",
-  tech_delay_minutes: "Route analysis suggests focus on high-delay corridors.",
-  spare_induced_delays_pct: "Inventory optimization recommended for critical stations.",
-  repeat_defects_30_90d: "Repeat defects detected. Root cause analysis recommended.",
-};
 
 export default function MaintenanceHealthOverview() {
   const { kpis, isLoading, error } = useDashboardKpis('maintenance');
@@ -66,13 +59,6 @@ export default function MaintenanceHealthOverview() {
             sources={getSourcesForKPI(kpi.kpi_key).map(s => ({ name: s }))}
             useLiveData={true}
             defaultRange="1M"
-            aiInsight={aiSuggestions[kpi.kpi_key]}
-            details={{
-              why: aiSuggestions[kpi.kpi_key] || "System-generated recommendation.",
-              evidence: [],
-              confidence: 0.85,
-              provenance: getSourcesForKPI(kpi.kpi_key)
-            }}
           />
         ))}
       </div>

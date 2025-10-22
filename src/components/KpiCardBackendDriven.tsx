@@ -88,17 +88,22 @@ export function KpiCardBackendDriven({
       );
     }
 
+    const unit = kpiMeta.unit ?? '';
+    const xLabel = kpiMeta.x_axis ?? '';
+    const yLabel = kpiMeta.y_axis ?? '';
+
     // Dual-axis special case
     if (kpiMeta.config?.dualAxis) {
+      const cfg = kpiMeta.config.dualAxis;
       return (
         <DualAxisLine
           data={payload.data || []}
-          seriesMap={kpiMeta.config.dualAxis.seriesMap}
-          rightAxisName={kpiMeta.config.dualAxis.rightAxisName}
-          unitLeft={kpiMeta.unit}
-          unitRight={kpiMeta.config.dualAxis.rightAxisUnit}
-          xLabel={kpiMeta.x_axis}
-          yLabel={kpiMeta.y_axis}
+          seriesMap={cfg.seriesMap}
+          rightAxisName={cfg.rightAxisName}
+          unitLeft={unit}
+          unitRight={cfg.rightAxisUnit ?? ''}
+          xLabel={xLabel}
+          yLabel={yLabel}
         />
       );
     }
@@ -107,61 +112,34 @@ export function KpiCardBackendDriven({
       case 'line':
       case 'sparkline':
       case 'timeline':
-        return (
-          <LineChart
-            data={payload.data || []}
-            unit={kpiMeta.unit}
-            xLabel={kpiMeta.x_axis}
-            yLabel={kpiMeta.y_axis}
-          />
-        );
+        return <LineChart data={payload.data || []} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
 
       case 'gauge':
         const gaugeValue = payload.data?.[payload.data.length - 1]?.value || 0;
-        return <GaugeChart value={gaugeValue} unit={kpiMeta.unit} />;
+        return <GaugeChart value={gaugeValue} unit={unit} />;
 
       case 'numeric':
         const numericValue = payload.data?.[payload.data.length - 1]?.value || 0;
-        return <NumericChart value={numericValue} unit={kpiMeta.unit} label={kpiMeta.y_axis} />;
+        return <NumericChart value={numericValue} unit={unit} label={kpiMeta.name} />;
 
       case 'delta':
-        return (
-          <BarChart
-            data={payload.data || []}
-            unit={kpiMeta.unit}
-            xLabel={kpiMeta.x_axis}
-            yLabel={kpiMeta.y_axis}
-          />
-        );
+        return <BarChart data={(payload.data || []) as Array<{ category: string; value: number }>} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
 
       case 'bar':
       case 'column':
-        return (
-          <BarChart
-            data={payload.data || []}
-            unit={kpiMeta.unit}
-            xLabel={kpiMeta.x_axis}
-            yLabel={kpiMeta.y_axis}
-          />
-        );
+        return <BarChart data={(payload.data || []) as Array<{ category: string; value: number }>} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
 
       case 'pie':
-        return <PieChart data={payload.data || []} unit={kpiMeta.unit} />;
+        return <PieChart data={(payload.data || []) as Array<{ category: string; value: number }>} unit={unit} />;
 
       case 'heatmap':
-        return (
-          <HeatmapChart
-            data={payload.data || []}
-            xLabel={kpiMeta.x_axis}
-            yLabel={kpiMeta.y_axis}
-          />
-        );
+        return <HeatmapChart data={(payload.data || []) as Array<{ x: string; y: string; value: number }>} xLabel={xLabel} yLabel={yLabel} />;
 
       case 'table':
         return <TableChart rows={payload.rows || []} />;
 
       default:
-        return <div className="h-[220px] flex items-center justify-center text-muted-foreground">Unsupported chart type</div>;
+        return <div className="h-[220px] flex items-center justify-center text-muted-foreground">No renderer</div>;
     }
   };
 

@@ -8,10 +8,18 @@ interface GaugeChartProps {
 
 export function GaugeChart({ value, unit = "%", max = 100 }: GaugeChartProps) {
   const option = {
-    series: [{ type: 'gauge', startAngle: 180, endAngle: 0, min: 0, max,
-      axisLine: { lineStyle: { width: 20, color: [[0.7, '#00C49F'], [0.9, '#FFBB28'], [1, '#FF8042']] } },
-      detail: { valueAnimation: true, formatter: `{value}${unit}`, fontSize: 28, fontWeight: 'bold', offsetCenter: [0, '70%'] },
-      data: [{ value }]
+    series: [{ 
+      type: 'gauge', 
+      min: 0, 
+      max, 
+      startAngle: 180, 
+      endAngle: 0,
+      detail: { 
+        formatter: `{value}${unit}`, 
+        fontSize: 28, 
+        fontWeight: 'bold' 
+      }, 
+      data: [{ value }] 
     }]
   };
   return <ReactECharts option={option} style={{ height: "260px", width: "100%" }} />;
