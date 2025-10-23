@@ -1,103 +1,82 @@
 import useSWR from 'swr';
 import { supabase } from '@/integrations/supabase/client';
-import type { KpiRange } from '@/lib/kpi-utils';
+
+export type KpiRange = '1D'|'1W'|'2W'|'1M'|'6M'|'1Y';
+
+export type KpiVariant =
+  | 'line'|'gauge'|'numeric'|'sparkline'|'delta'
+  | 'bar'|'column'|'pie'
+  | 'table'|'heatmap';
 
 export interface KpiMeta {
   kpi_key: string;
-  dashboard: string;
   name: string;
-  variant: 'line' | 'gauge' | 'numeric' | 'delta' | 'sparkline' | 'timeline' | 'bar' | 'column' | 'pie' | 'heatmap' | 'table';
+  variant: KpiVariant;
   unit?: string;
   x_axis?: string;
   y_axis?: string;
-  config?: {
-    dualAxis?: {
-      seriesMap: Record<string, 0 | 1>;
-      rightAxisName?: string;
-      rightAxisUnit?: string;
-    };
-    [key: string]: any;
-  };
+  dashboard?: string;
+  config?: any;
 }
 
 export interface KpiPayload {
-  meta: KpiMeta;
-  timeseries?: Array<{ ts: string; bucket?: string; series?: string; value: number }>;
-  latest?: { ts: string; value: number; series?: string };
-  categories?: Array<{ category: string; series?: string; value: number }>;
-  heatmap?: Array<{ x: string; y: string; value: number }>;
+  meta?: KpiMeta | null;
+  timeseries?: Array<{ ts?: string; bucket?: string; series?: string; value: number }>;
+  categories?: Array<{ category: string; series?: string|null; value: number }>;
   tableRows?: Array<Record<string, any>>;
+  heatmap?: Array<{ x: string; y: string; value: number }>;
+  latest?: any;
   generated_at?: string;
 }
 
-async function fetchKpiPayload(kpiKey: string, range: KpiRange): Promise<KpiPayload | null> {
-  if (!kpiKey) return null;
-  
+async function fetchKpiPayload(kpiKey: string, range: KpiRange): Promise<KpiPayload> {
   const { data, error } = await supabase.rpc('get_kpi_payload', {
     p_kpi_key: kpiKey,
-    p_range: range
+    p_range: range,
   });
-
   if (error) {
-    console.error('[KPI] Fetch failed:', error);
-    throw new Error('Failed to load KPI data');
+    console.error('[KPI RPC error]', kpiKey, range, error);
+    throw error;
   }
-
-  if (!data) return null;
-  
-  const payload = data as any;
-  return {
-    ...payload,
-    generated_at: payload?.generated_at ?? new Date().toISOString()
-  } as KpiPayload;
+  return (data as unknown as KpiPayload) ?? {};
 }
 
-export function useKpiData(kpiKey: string, range: KpiRange = '1M', enabled: boolean = true) {
+export function useKpiData(kpiKey?: string, range: KpiRange = '1M', enabled = true) {
+  const key = enabled && kpiKey ? ['kpi', kpiKey, range] as const : null;
   const { data, error, isLoading, isValidating, mutate } = useSWR(
-    enabled && kpiKey ? ['kpi', kpiKey, range] as const : null,
-    ([, k, r]) => fetchKpiPayload(k, r),
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-      dedupingInterval: 30000,
-      keepPreviousData: true,
-    }
+    key,
+    () => fetchKpiPayload(kpiKey!, range),
+    { revalidateOnFocus: false, dedupingInterval: 30000 }
   );
 
   return {
-    payload: data ?? null,
+    payload: data,
     isLoading,
     isValidating,
     error,
-    refresh: mutate,
+    refresh: () => mutate(),
   };
 }
 
+async function fetchDashboardKpis(dashboard: string): Promise<KpiMeta[]> {
+  const { data, error } = await supabase
+    .from('kpi_meta')
+    .select('kpi_key, name, variant, unit, x_axis, y_axis, dashboard, config')
+    .eq('dashboard', dashboard)
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.error('[kpi_meta fetch error]', dashboard, error);
+    throw error;
+  }
+  return (data ?? []) as KpiMeta[];
+}
+
 export function useDashboardKpis(dashboard: string) {
-  const { data, error, isLoading } = useSWR(
-    dashboard ? ['dashboard-kpis', dashboard] : null,
-    async () => {
-      const { data, error } = await supabase
-        .from('kpi_meta')
-        .select('kpi_key, dashboard, name, variant, x_axis, y_axis, unit, config')
-        .eq('dashboard', dashboard)
-        .order('kpi_key');
-
-      if (error) throw error;
-      if (!data || data.length === 0) {
-        console.warn(`[kpi_meta] No KPIs found for dashboard: ${dashboard}`);
-      }
-      return data as KpiMeta[];
-    },
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-    }
-  );
-
-  return {
-    kpis: data || [],
-    isLoading,
-    error,
-  };
+  const key = ['kpi_meta', dashboard] as const;
+  const { data, error, isLoading } = useSWR(key, () => fetchDashboardKpis(dashboard), {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000,
+  });
+  return { kpis: data ?? [], error, isLoading };
 }

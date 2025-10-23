@@ -5,15 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Clock, RefreshCw, Loader2 } from "lucide-react";
 import { useKpiData, type KpiMeta } from "@/hooks/useKpiData";
-import { LineChart } from "./dashboard/charts/LineChart";
-import { BarChart } from "./dashboard/charts/BarChart";
-import { PieChart } from "./dashboard/charts/PieChart";
-import { GaugeChart } from "./dashboard/charts/GaugeChart";
-import { NumericChart } from "./dashboard/charts/NumericChart";
-import { HeatmapChart } from "./dashboard/charts/HeatmapChart";
-import { TableChart } from "./dashboard/charts/TableChart";
-import { DualAxisLine } from "./dashboard/charts/DualAxisLine";
-import { formatDistanceToNow } from "date-fns";
+import { LineChart } from "@/components/charts/LineChart";
+import { BarChart } from "@/components/charts/BarChart";
+import { PieChart } from "@/components/charts/PieChart";
+import { GaugeChart } from "@/components/charts/GaugeChart";
+import { NumericChart } from "@/components/charts/NumericChart";
+import { HeatmapChart } from "@/components/charts/HeatmapChart";
+import { TableChart } from "@/components/charts/TableChart";
 import { TIME_SERIES_VARIANTS, KPI_RANGES, normalizePercent, type KpiRange } from "@/lib/kpi-utils";
 
 interface KpiCardBackendDrivenProps {
@@ -49,12 +47,12 @@ export function KpiCardBackendDriven({
 
   const renderChart = () => {
     if (isLoading || !payload) {
-      return <div className="h-[300px] flex items-center justify-center text-muted-foreground">Loading...</div>;
+      return <div className="h-[220px] flex items-center justify-center text-muted-foreground">Loading...</div>;
     }
 
     if (error) {
       return (
-        <div className="h-[300px] flex flex-col items-center justify-center gap-2">
+        <div className="h-[220px] flex flex-col items-center justify-center gap-2">
           <div className="text-sm text-destructive">Failed to load data</div>
           <Button size="sm" variant="outline" onClick={() => refresh()}>
             Retry
@@ -68,52 +66,49 @@ export function KpiCardBackendDriven({
     const yLabel = kpiMeta.y_axis ?? '';
     const isPercent = unit === '%' || unit.toLowerCase().includes('percent');
 
-    // Dual-axis special case
-    if (kpiMeta.config?.dualAxis) {
-      const cfg = kpiMeta.config.dualAxis;
-      return (
-        <DualAxisLine
-          data={payload.timeseries || []}
-          seriesMap={cfg.seriesMap}
-          rightAxisName={cfg.rightAxisName}
-          unitLeft={unit}
-          unitRight={cfg.rightAxisUnit ?? ''}
-          xLabel={xLabel}
-          yLabel={yLabel}
-        />
-      );
-    }
+    const hasTS  = (payload?.timeseries?.length ?? 0) > 0;
+    const hasCat = (payload?.categories?.length ?? 0) > 0;
+    const hasTbl = (payload?.tableRows?.length ?? 0) > 0;
+    const hasHM  = (payload?.heatmap?.length ?? 0) > 0;
 
     switch (kpiMeta.variant) {
       case 'line':
       case 'sparkline':
-      case 'timeline':
-        return <LineChart data={payload.timeseries || []} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
-
-      case 'gauge':
-        const gaugeValue = isPercent ? normalizePercent(payload.latest?.value) : (payload.latest?.value ?? 0);
-        return <GaugeChart value={gaugeValue} unit={unit || '%'} />;
-
-      case 'numeric':
-        const numericValue = isPercent ? normalizePercent(payload.latest?.value) : (payload.latest?.value ?? 0);
-        return <NumericChart value={numericValue} unit={unit} label={kpiMeta.name} />;
-
       case 'delta':
+        if (!hasTS) return <div className="h-[220px] flex items-center justify-center text-muted-foreground">No data</div>;
+        return <LineChart data={payload.timeseries!} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
+
+      case 'gauge': {
+        const val = payload?.latest?.value ?? payload?.timeseries?.at(-1)?.value ?? 0;
+        const gaugeValue = isPercent ? normalizePercent(val) : Number(val);
+        return <GaugeChart value={gaugeValue} unit={unit || '%'} />;
+      }
+
+      case 'numeric': {
+        const val = payload?.latest?.value ?? payload?.timeseries?.at(-1)?.value ?? 0;
+        const numericValue = isPercent ? normalizePercent(val) : Number(val);
+        return <NumericChart value={numericValue} unit={unit} label={kpiMeta.name} />;
+      }
+
       case 'bar':
       case 'column':
-        return <BarChart data={payload.categories || []} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
+        if (!hasCat) return <div className="h-[220px] flex items-center justify-center text-muted-foreground">No data</div>;
+        return <BarChart data={payload.categories!} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
 
       case 'pie':
-        return <PieChart data={payload.categories || []} unit={unit} />;
+        if (!hasCat) return <div className="h-[240px] flex items-center justify-center text-muted-foreground">No data</div>;
+        return <PieChart data={payload.categories!} unit={unit} />;
 
       case 'heatmap':
-        return <HeatmapChart data={payload.heatmap || []} xLabel={xLabel} yLabel={yLabel} />;
+        if (!hasHM) return <div className="h-[220px] flex items-center justify-center text-muted-foreground">No data</div>;
+        return <HeatmapChart data={payload.heatmap!} xLabel={xLabel} yLabel={yLabel} />;
 
       case 'table':
-        return <TableChart rows={payload.tableRows || []} />;
+        if (!hasTbl) return <div className="h-[220px] flex items-center justify-center text-muted-foreground">No data</div>;
+        return <TableChart rows={payload.tableRows!} />;
 
       default:
-        return <div className="h-[300px] flex items-center justify-center text-muted-foreground">No renderer</div>;
+        return <div className="h-[220px] flex items-center justify-center text-muted-foreground">Unsupported variant</div>;
     }
   };
 
@@ -146,13 +141,15 @@ export function KpiCardBackendDriven({
               <TooltipContent>Sync Now</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <div className="flex items-center gap-1.5">
-            {sources.map(source => (
-              <Badge key={source.name} variant="outline" className="text-[11px] px-2 py-0.5 rounded-full">
-                {source.name}
-              </Badge>
-            ))}
-          </div>
+          {sources.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              {sources.map(source => (
+                <Badge key={source.name} variant="outline" className="text-[11px] px-2 py-0.5 rounded-full">
+                  {source.name}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
