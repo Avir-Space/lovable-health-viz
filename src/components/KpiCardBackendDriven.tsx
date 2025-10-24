@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Clock, RefreshCw, Loader2 } from "lucide-react";
-import { useKpiData, type KpiMeta } from "@/hooks/useKpiData";
+import { useKpiData, type KpiMeta, type KpiRange } from "@/hooks/useKpiData";
 import { LineChart } from "@/components/charts/LineChart";
 import { BarChart } from "@/components/charts/BarChart";
 import { PieChart } from "@/components/charts/PieChart";
@@ -12,13 +12,16 @@ import { GaugeChart } from "@/components/charts/GaugeChart";
 import { NumericChart } from "@/components/charts/NumericChart";
 import { HeatmapChart } from "@/components/charts/HeatmapChart";
 import { TableChart } from "@/components/charts/TableChart";
-import { TIME_SERIES_VARIANTS, KPI_RANGES, normalizePercent, type KpiRange } from "@/lib/kpi-utils";
+
+const TIME_SERIES_VARIANTS = new Set(['line', 'sparkline', 'delta']);
+const KPI_RANGES: KpiRange[] = ['1D','1W','2W','1M','6M','1Y'];
 
 interface KpiCardBackendDrivenProps {
   kpiMeta: KpiMeta;
   sources?: Array<{ name: string }>;
   useLiveData?: boolean;
   defaultRange?: KpiRange;
+  titleOverride?: string;
 }
 
 export function KpiCardBackendDriven({
@@ -26,10 +29,11 @@ export function KpiCardBackendDriven({
   sources = [],
   useLiveData = true,
   defaultRange = '1M',
+  titleOverride,
 }: KpiCardBackendDrivenProps) {
   const [selectedRange, setSelectedRange] = useState<KpiRange>(defaultRange);
   
-  const isTimeSeries = TIME_SERIES_VARIANTS.has(kpiMeta.variant) || !!kpiMeta.config?.dualAxis;
+  const showRanges = TIME_SERIES_VARIANTS.has(kpiMeta.variant) || !!kpiMeta.config?.dualAxis;
   
   const { payload, isLoading, isValidating, error, refresh } = useKpiData(
     kpiMeta.kpi_key,
@@ -37,18 +41,13 @@ export function KpiCardBackendDriven({
     useLiveData
   );
 
-  const handleSync = async () => {
-    await refresh();
-  };
-
-  const handleRangeChange = (range: KpiRange) => {
-    setSelectedRange(range);
-  };
+  const title = titleOverride ?? (kpiMeta?.name || kpiMeta.kpi_key);
+  const unit = kpiMeta?.unit || '';
 
   const renderChart = () => {
     if (error) {
       return (
-        <div className="h-[220px] flex flex-col items-center justify-center gap-2">
+        <div className="h-[240px] flex flex-col items-center justify-center gap-2">
           <div className="text-sm text-destructive">Failed to load data</div>
           <Button size="sm" variant="outline" onClick={() => refresh()}>
             Retry
@@ -58,62 +57,48 @@ export function KpiCardBackendDriven({
     }
 
     if (isLoading || !payload) {
-      return <div className="h-[220px] flex items-center justify-center text-muted-foreground">Loading...</div>;
+      return <div className="h-[240px] flex items-center justify-center text-muted-foreground">Loading...</div>;
     }
 
-    const unit = kpiMeta.unit ?? '';
     const xLabel = kpiMeta.x_axis ?? '';
     const yLabel = kpiMeta.y_axis ?? '';
-    const isPercent = unit === '%' || unit.toLowerCase().includes('percent');
-
-    const hasTS  = (payload?.timeseries?.length ?? 0) > 0;
-    const hasCat = (payload?.categories?.length ?? 0) > 0;
-    const hasTbl = (payload?.tableRows?.length ?? 0) > 0;
-    const hasHM  = (payload?.heatmap?.length ?? 0) > 0;
 
     switch (kpiMeta.variant) {
       case 'line':
       case 'sparkline':
       case 'delta':
-        if (!hasTS) return <div className="h-[220px] flex items-center justify-center text-muted-foreground">No data</div>;
-        return <LineChart data={payload.timeseries!} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
+        return <LineChart data={payload.timeseries ?? []} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
 
       case 'gauge': {
-        const val = Number(payload?.latest?.value ?? payload?.timeseries?.at(-1)?.value ?? 0);
-        const gaugeValue = Number.isFinite(val) ? (isPercent ? normalizePercent(val) : val) : 0;
-        return <GaugeChart value={gaugeValue} unit={unit || '%'} />;
+        const val = payload?.latest?.value ?? payload?.timeseries?.at(-1)?.value ?? 0;
+        return <GaugeChart value={val} unit={unit || '%'} />;
       }
 
       case 'numeric': {
-        const val = Number(payload?.latest?.value ?? payload?.timeseries?.at(-1)?.value ?? 0);
-        const numericValue = Number.isFinite(val) ? (isPercent ? normalizePercent(val) : val) : 0;
-        return <NumericChart value={numericValue} unit={unit} label={kpiMeta.name} />;
+        const val = payload?.latest?.value ?? payload?.timeseries?.at(-1)?.value ?? 0;
+        return <NumericChart value={val} unit={unit} />;
       }
 
       case 'bar':
       case 'column':
-        if (!hasCat) return <div className="h-[220px] flex items-center justify-center text-muted-foreground">No data</div>;
-        return <BarChart data={payload.categories!} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
+        return <BarChart data={payload.categories ?? []} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
 
       case 'pie':
-        if (!hasCat) return <div className="h-[240px] flex items-center justify-center text-muted-foreground">No data</div>;
-        return <PieChart data={payload.categories!} unit={unit} />;
+        return <PieChart data={payload.categories ?? []} unit={unit} />;
 
       case 'heatmap':
-        if (!hasHM) return <div className="h-[220px] flex items-center justify-center text-muted-foreground">No data</div>;
-        return <HeatmapChart data={payload.heatmap!} xLabel={xLabel} yLabel={yLabel} />;
+        return <HeatmapChart data={payload.heatmap ?? []} xLabel={xLabel} yLabel={yLabel} />;
 
       case 'table':
-        if (!hasTbl) return <div className="h-[220px] flex items-center justify-center text-muted-foreground">No data</div>;
-        return <TableChart rows={payload.tableRows!} />;
+        return <TableChart rows={payload.tableRows ?? []} />;
 
       default:
-        return <div className="h-[220px] flex items-center justify-center text-muted-foreground">Unsupported variant</div>;
+        return <div className="h-[240px] flex items-center justify-center text-muted-foreground">Unsupported variant</div>;
     }
   };
 
   const syncedTime = payload?.generated_at 
-    ? `Synced ${new Date(payload.generated_at).toLocaleTimeString()}`
+    ? `Synced ${new Date(payload.generated_at).toLocaleString()}`
     : 'Not synced';
 
   return (
@@ -132,7 +117,7 @@ export function KpiCardBackendDriven({
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7 rounded-full"
-                  onClick={handleSync}
+                  onClick={() => refresh()}
                   disabled={isValidating}
                 >
                   {isValidating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
@@ -156,7 +141,7 @@ export function KpiCardBackendDriven({
       {/* Body */}
       <div className="p-4 space-y-4">
         {/* Time Range Selector - Only for time-series KPIs */}
-        {isTimeSeries && (
+        {showRanges && (
           <div className="flex items-center gap-2 flex-wrap">
             {KPI_RANGES.map(range => (
               <Button
@@ -164,7 +149,7 @@ export function KpiCardBackendDriven({
                 size="sm"
                 variant={selectedRange === range ? 'default' : 'outline'}
                 className="h-7 px-3 text-xs"
-                onClick={() => handleRangeChange(range)}
+                onClick={() => setSelectedRange(range)}
               >
                 {range}
               </Button>
@@ -178,7 +163,7 @@ export function KpiCardBackendDriven({
 
       {/* Footer */}
       <div className="px-4 pb-4">
-        <div className="text-base font-semibold">{kpiMeta.name}</div>
+        <div className="text-base font-semibold">{title}</div>
       </div>
     </Card>
   );

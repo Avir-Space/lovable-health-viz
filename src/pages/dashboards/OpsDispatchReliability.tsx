@@ -3,8 +3,9 @@ import { KpiCardBackendDriven } from '@/components/KpiCardBackendDriven';
 
 export default function OpsDispatchReliability() {
   const { kpis, isLoading, error } = useDashboardKpis('ops-dispatch-reliability');
+
   if (isLoading) return <div className="p-6">Loading dashboard…</div>;
-  if (error) return <div className="p-6 text-destructive">Failed to load.</div>;
+  if (error) return <div className="p-6 text-destructive">Failed to load dashboard</div>;
 
   return (
     <div className="space-y-6 p-6">

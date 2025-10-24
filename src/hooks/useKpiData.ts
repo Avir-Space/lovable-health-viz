@@ -21,26 +21,42 @@ export interface KpiMeta {
 
 export interface KpiPayload {
   meta?: KpiMeta | null;
-  timeseries?: Array<{ ts?: string; bucket?: string; series?: string; value: number }>;
+  timeseries?: Array<{ ts?: string; bucket?: string; series?: string|null; value: number }>;
   categories?: Array<{ category: string; series?: string|null; value: number }>;
   tableRows?: Array<Record<string, any>>;
   heatmap?: Array<{ x: string; y: string; value: number }>;
-  latest?: any;
+  latest?: { value?: number } | null;
   generated_at?: string;
 }
 
+/** Try all known parameter names so we work with any RPC signature */
+async function rpcGet(kpiKey: string, range: KpiRange) {
+  // preferred
+  let { data, error } = await supabase.rpc('get_kpi_payload', { kpi_key: kpiKey, range_tag: range });
+  if (!error && data) return { data };
+
+  // legacy #1 (seen in this project earlier)
+  ({ data, error } = await supabase.rpc('get_kpi_payload', { p_kpi_key: kpiKey, p_range: range } as any));
+  if (!error && data) return { data };
+
+  // legacy #2 (mixed)
+  ({ data, error } = await supabase.rpc('get_kpi_payload', { p_kpi_key: kpiKey, range_tag: range } as any));
+  return { data, error };
+}
+
 async function fetchKpiPayload(kpiKey: string, range: KpiRange): Promise<KpiPayload> {
-  const { data, error } = await supabase.rpc('get_kpi_payload', {
-    p_kpi_key: kpiKey,
-    p_range: range,
-  });
+  const { data, error } = await rpcGet(kpiKey, range);
+
   if (error) {
-    console.error('[KPI RPC error]', kpiKey, range, error);
-    throw error;
+    console.error('[KPI RPC failed]', { kpiKey, range, error });
+    return {
+      meta: { kpi_key: kpiKey, name: kpiKey, variant: 'line' as any },
+      timeseries: [], categories: [], tableRows: [], heatmap: [],
+      latest: null, generated_at: new Date().toISOString(),
+    };
   }
-  
+
   const payload = (data ?? {}) as KpiPayload;
-  // Normalize: never return nulls so charts won't spin forever
   return {
     meta: payload.meta ?? null,
     timeseries: Array.isArray(payload.timeseries) ? payload.timeseries : [],

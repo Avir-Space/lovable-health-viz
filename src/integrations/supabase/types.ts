@@ -41,6 +41,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_cat_meta"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "kpi_meta"
+            referencedColumns: ["kpi_key"]
+          },
+          {
             foreignKeyName: "kpi_categories_kpi_key_fkey"
             columns: ["kpi_key"]
             isOneToOne: false
@@ -55,7 +62,9 @@ export type Database = {
           kpi_key: string | null
           snapshot_ts: string
           value: number
+          x: string | null
           x_label: string
+          y: string | null
           y_label: string
         }
         Insert: {
@@ -63,18 +72,29 @@ export type Database = {
           kpi_key?: string | null
           snapshot_ts?: string
           value: number
-          x_label: string
-          y_label: string
+          x?: string | null
+          x_label?: string
+          y?: string | null
+          y_label?: string
         }
         Update: {
           id?: number
           kpi_key?: string | null
           snapshot_ts?: string
           value?: number
+          x?: string | null
           x_label?: string
+          y?: string | null
           y_label?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_heat_meta"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "kpi_meta"
+            referencedColumns: ["kpi_key"]
+          },
           {
             foreignKeyName: "kpi_heatmap_kpi_key_fkey"
             columns: ["kpi_key"]
@@ -121,22 +141,29 @@ export type Database = {
         Row: {
           id: number
           kpi_key: string | null
-          row_data: Json
+          row: Json | null
           snapshot_ts: string
         }
         Insert: {
           id?: number
           kpi_key?: string | null
-          row_data: Json
+          row?: Json | null
           snapshot_ts?: string
         }
         Update: {
           id?: number
           kpi_key?: string | null
-          row_data?: Json
+          row?: Json | null
           snapshot_ts?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_tbl_meta"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "kpi_meta"
+            referencedColumns: ["kpi_key"]
+          },
           {
             foreignKeyName: "kpi_table_rows_kpi_key_fkey"
             columns: ["kpi_key"]
@@ -176,6 +203,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_ts_meta"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "kpi_meta"
+            referencedColumns: ["kpi_key"]
+          },
+          {
             foreignKeyName: "kpi_timeseries_kpi_key_fkey"
             columns: ["kpi_key"]
             isOneToOne: false
@@ -189,8 +223,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _fx_day_grid: {
+        Args: { n: number }
+        Returns: {
+          ts: string
+        }[]
+      }
+      _fx_hash01: { Args: { p: string }; Returns: number }
+      _fx_points_for_range: { Args: { r: string }; Returns: number }
+      _grid: {
+        Args: { p_range: string }
+        Returns: {
+          ts: string
+        }[]
+      }
+      _hash01: { Args: { txt: string }; Returns: number }
       get_kpi_payload: {
-        Args: { p_kpi_key: string; p_range: string }
+        Args: { kpi_key: string; range_tag: string }
         Returns: Json
       }
       kpi_latest_categories: {
