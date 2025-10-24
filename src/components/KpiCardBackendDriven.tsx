@@ -102,69 +102,32 @@ export function KpiCardBackendDriven({
     : 'Not synced';
 
   return (
-    <Card className="rounded-2xl shadow-sm border bg-card">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Clock className="h-3.5 w-3.5" />
-          <span>{syncedTime}</span>
-        </div>
+    <div className="rounded-2xl border bg-card shadow-sm overflow-hidden h-[340px] flex flex-col">
+      <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+        <div>{payload?.generated_at ? `Synced ${new Date(payload.generated_at).toLocaleString()}` : 'Not synced'}</div>
         <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 rounded-full"
-                  onClick={() => refresh()}
-                  disabled={isValidating}
-                >
-                  {isValidating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Sync Now</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          {sources.length > 0 && (
-            <div className="flex items-center gap-1.5">
-              {sources.map(source => (
-                <Badge key={source.name} variant="outline" className="text-[11px] px-2 py-0.5 rounded-full">
-                  {source.name}
-                </Badge>
+          {showRanges && (
+            <div className="flex gap-1">
+              {(['1D','1W','2W','1M','6M','1Y'] as KpiRange[]).map(r => (
+                <button
+                  key={r}
+                  className={`rounded-md px-2 py-1 border text-[11px] ${r===selectedRange ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
+                  onClick={() => setSelectedRange(r)}
+                >{r}</button>
               ))}
             </div>
           )}
+          <button className="rounded-md border px-2 py-1 text-[11px]" onClick={() => refresh()} disabled={isValidating}>
+            {isValidating ? 'Syncing…' : 'Sync'}
+          </button>
         </div>
       </div>
 
-      {/* Body */}
-      <div className="p-4 space-y-4">
-        {/* Time Range Selector - Only for time-series KPIs */}
-        {showRanges && (
-          <div className="flex items-center gap-2 flex-wrap">
-            {KPI_RANGES.map(range => (
-              <Button
-                key={range}
-                size="sm"
-                variant={selectedRange === range ? 'default' : 'outline'}
-                className="h-7 px-3 text-xs"
-                onClick={() => setSelectedRange(range)}
-              >
-                {range}
-              </Button>
-            ))}
-          </div>
-        )}
+      <div className="px-4 font-medium text-sm truncate">{title}</div>
 
-        {/* Chart */}
+      <div className="flex-1 px-2 pb-3">
         {renderChart()}
       </div>
-
-      {/* Footer */}
-      <div className="px-4 pb-4">
-        <div className="text-base font-semibold">{title}</div>
-      </div>
-    </Card>
+    </div>
   );
 }

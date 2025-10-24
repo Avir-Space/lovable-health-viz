@@ -1,18 +1,11 @@
-import { ResponsiveContainer, PieChart as RPieChart, Pie, Tooltip, Legend, Cell } from 'recharts';
+import ReactECharts from 'echarts-for-react';
 
-type Row = { category: string; value: number };
-const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#84cc16','#e11d48'];
-
-export function PieChart({ data, unit = '' }: { data: Row[]; unit?: string; }) {
-  return (
-    <ResponsiveContainer width="100%" height={240}>
-      <RPieChart>
-        <Tooltip formatter={(v:any, n:any)=>[`${v}${unit}`, n]} />
-        <Legend />
-        <Pie data={data} dataKey="value" nameKey="category" outerRadius={90}>
-          {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-        </Pie>
-      </RPieChart>
-    </ResponsiveContainer>
-  );
+export function PieChart({ data, unit='' }:{ data:Array<{category:string; value:number}>; unit?:string }) {
+  const d=(data||[]).map(r=>({name:r.category, value:Number(r.value||0)}));
+  const option={
+    tooltip:{ trigger:'item', formatter:(p:any)=>`${p.name}: ${p.value}${unit} (${p.percent}%)` },
+    legend:{ type:'scroll', orient:'vertical', right:0, top:20, bottom:20, textStyle:{fontSize:10} },
+    series:[{ type:'pie', radius:['55%','75%'], center:['40%','50%'], data:d, label:{ show:false } }]
+  };
+  return <ReactECharts option={option} style={{height:270}} notMerge />;
 }

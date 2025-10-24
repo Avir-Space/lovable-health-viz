@@ -1,33 +1,28 @@
-import { ResponsiveContainer, LineChart as RLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import ReactECharts from 'echarts-for-react';
+import { fmt } from '@/lib/num';
 
-type Row = { ts?: string; bucket?: string; series?: string; value: number };
-
-export function LineChart({ data, unit = '', xLabel, yLabel }: {
-  data: Row[]; unit?: string; xLabel?: string; yLabel?: string;
+export function LineChart({ data, unit='', xLabel='', yLabel='' }:{
+  data: Array<{ bucket?: string; ts?: string; series?: string|null; value: number }>;
+  unit?: string; xLabel?: string; yLabel?: string;
 }) {
-  const seriesNames = Array.from(new Set(data.map(d => d.series ?? 'value')));
-  const x = (r: Row) => r.bucket ?? r.ts ?? '';
-
-  const byX = new Map<string, any>();
-  data.forEach(r => {
-    const key = x(r);
-    if (!byX.has(key)) byX.set(key, { x: key });
-    byX.get(key)[r.series ?? 'value'] = r.value;
+  const seriesMap: Record<string, {x:string;y:number}[]> = {};
+  (data||[]).forEach(r=>{
+    const k = r.series ?? 'value';
+    (seriesMap[k] ||= []).push({x: r.bucket || r.ts || '', y: Number(r.value||0)});
   });
-  const rows = Array.from(byX.values());
+  const first = Object.values(seriesMap)[0] ?? [];
+  const x = first.map(p=>p.x);
 
-  return (
-    <ResponsiveContainer width="100%" height={220}>
-      <RLineChart data={rows}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="x" label={{ value: xLabel, position: 'insideBottom', offset: -5 }} />
-        <YAxis label={{ value: yLabel, angle: -90, position: 'insideLeft' }} />
-        <Tooltip formatter={(v:any)=>`${v}${unit}`} />
-        {seriesNames.length > 1 && <Legend />}
-        {seriesNames.map((s) => (
-          <Line key={s} type="monotone" dataKey={s} dot={false} strokeWidth={2} />
-        ))}
-      </RLineChart>
-    </ResponsiveContainer>
-  );
+  const option = {
+    grid: { top: 18, right: 16, bottom: 36, left: 52, containLabel: true },
+    tooltip: { trigger: 'axis' },
+    legend: Object.keys(seriesMap).length>1 ? { top: 0, left: 8, icon: 'circle', itemHeight: 8, textStyle:{fontSize:10} } : undefined,
+    xAxis: { type:'category', boundaryGap:false, data:x, axisLabel:{interval:'auto', rotate: x.length>16?30:0, fontSize:10} },
+    yAxis: { type:'value', axisLabel:{ formatter: (v:number)=>fmt(v, unit), fontSize:10 }, name: yLabel, nameGap: 30, nameLocation:'middle' },
+    dataZoom: x.length>24 ? [{type:'inside'},{type:'slider', height:12, bottom:12}] : undefined,
+    series: Object.entries(seriesMap).map(([name,pts])=>({
+      name, type:'line', smooth:true, showSymbol:false, sampling:'lttb', data: pts.map(p=>p.y)
+    })),
+  };
+  return <ReactECharts option={option} style={{height:270}} notMerge />;
 }
