@@ -38,7 +38,18 @@ async function fetchKpiPayload(kpiKey: string, range: KpiRange): Promise<KpiPayl
     console.error('[KPI RPC error]', kpiKey, range, error);
     throw error;
   }
-  return (data as unknown as KpiPayload) ?? {};
+  
+  const payload = (data ?? {}) as KpiPayload;
+  // Normalize: never return nulls so charts won't spin forever
+  return {
+    meta: payload.meta ?? null,
+    timeseries: Array.isArray(payload.timeseries) ? payload.timeseries : [],
+    categories: Array.isArray(payload.categories) ? payload.categories : [],
+    tableRows: Array.isArray(payload.tableRows) ? payload.tableRows : [],
+    heatmap: Array.isArray(payload.heatmap) ? payload.heatmap : [],
+    latest: payload.latest ?? null,
+    generated_at: payload.generated_at ?? new Date().toISOString(),
+  };
 }
 
 export function useKpiData(kpiKey?: string, range: KpiRange = '1M', enabled = true) {

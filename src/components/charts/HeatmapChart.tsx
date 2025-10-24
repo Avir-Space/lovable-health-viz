@@ -7,8 +7,8 @@ export function HeatmapChart({ data, xLabel = 'X', yLabel = 'Y' }:{ data: {x:str
   const min = Math.min(...vals), max = Math.max(...vals);
   
   const color = (v:number) => {
-    const t2 = Math.max(0, Math.min(1, max !== min ? (v - min) / (max - min) : 0));
-    const r = Math.round(224 - 100*t2), g = Math.round(247 - 150*t2), b = Math.round(250 - 200*t2);
+    const t = max === min ? 0 : (v - min) / (max - min);
+    const r = Math.round(224 - 120*t), g = Math.round(247 - 180*t), b = Math.round(250 - 220*t);
     return `rgb(${r},${g},${b})`;
   };
 
@@ -19,8 +19,8 @@ export function HeatmapChart({ data, xLabel = 'X', yLabel = 'Y' }:{ data: {x:str
         <div></div>
         {xs.map(x => <div key={x} className="text-xs text-center">{x}</div>)}
         {ys.map(y => (
-          <>
-            <div key={`label-${y}`} className="text-xs">{y}</div>
+          <div key={y} className="contents">
+            <div className="text-xs">{y}</div>
             {xs.map(x => {
               const v = byXY.get(`${x}__${y}`) ?? 0;
               return (
@@ -28,7 +28,7 @@ export function HeatmapChart({ data, xLabel = 'X', yLabel = 'Y' }:{ data: {x:str
                      title={`${x} × ${y}: ${v}`} style={{ background: color(v) }}>{v}</div>
               );
             })}
-          </>
+          </div>
         ))}
       </div>
     </div>

@@ -10,7 +10,7 @@ export function TableChart({ rows }:{ rows: any[] }) {
         <tbody>
           {rows.map((r, i)=>(
             <tr key={i} className="border-b">
-              {cols.map(c=>(<td key={c} className="p-2">{typeof r[c]==='number'? r[c].toFixed(2): String(r[c])}</td>))}
+              {cols.map(c=>(<td key={c} className="p-2">{typeof r[c]==='number'? Number(r[c]).toFixed(2): String(r[c])}</td>))}
             </tr>
           ))}
         </tbody>

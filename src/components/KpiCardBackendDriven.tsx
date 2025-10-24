@@ -46,10 +46,6 @@ export function KpiCardBackendDriven({
   };
 
   const renderChart = () => {
-    if (isLoading || !payload) {
-      return <div className="h-[220px] flex items-center justify-center text-muted-foreground">Loading...</div>;
-    }
-
     if (error) {
       return (
         <div className="h-[220px] flex flex-col items-center justify-center gap-2">
@@ -59,6 +55,10 @@ export function KpiCardBackendDriven({
           </Button>
         </div>
       );
+    }
+
+    if (isLoading || !payload) {
+      return <div className="h-[220px] flex items-center justify-center text-muted-foreground">Loading...</div>;
     }
 
     const unit = kpiMeta.unit ?? '';
@@ -79,14 +79,14 @@ export function KpiCardBackendDriven({
         return <LineChart data={payload.timeseries!} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
 
       case 'gauge': {
-        const val = payload?.latest?.value ?? payload?.timeseries?.at(-1)?.value ?? 0;
-        const gaugeValue = isPercent ? normalizePercent(val) : Number(val);
+        const val = Number(payload?.latest?.value ?? payload?.timeseries?.at(-1)?.value ?? 0);
+        const gaugeValue = Number.isFinite(val) ? (isPercent ? normalizePercent(val) : val) : 0;
         return <GaugeChart value={gaugeValue} unit={unit || '%'} />;
       }
 
       case 'numeric': {
-        const val = payload?.latest?.value ?? payload?.timeseries?.at(-1)?.value ?? 0;
-        const numericValue = isPercent ? normalizePercent(val) : Number(val);
+        const val = Number(payload?.latest?.value ?? payload?.timeseries?.at(-1)?.value ?? 0);
+        const numericValue = Number.isFinite(val) ? (isPercent ? normalizePercent(val) : val) : 0;
         return <NumericChart value={numericValue} unit={unit} label={kpiMeta.name} />;
       }
 
