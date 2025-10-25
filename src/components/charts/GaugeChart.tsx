@@ -1,14 +1,17 @@
-export function GaugeChart({ value, unit = '%' }:{ value:number; unit?: string; }) {
-  const v = Number.isFinite(Number(value)) ? Number(value) : 0;
-  const pct = Math.max(0, Math.min(100, v));
-  return (
-    <div className="flex flex-col items-center justify-center h-[270px]">
-      <div className="relative w-40 h-20 overflow-hidden">
-        <div className="absolute inset-0 rounded-t-full border-8 border-muted"></div>
-        <div className="absolute inset-0 rounded-t-full border-8 border-primary"
-             style={{ clipPath: `polygon(0% 100%, 0% 0%, ${pct}% 0%, ${pct}% 100%)` }} />
-      </div>
-      <div className="text-xl font-semibold mt-2">{pct.toFixed(0)}{unit}</div>
-    </div>
-  );
+import EChart from './EChart';
+
+export default function GaugeChart({ value, unit = '%', max = 100 }: { value: number; unit?: string; max?: number }) {
+  const option = {
+    series: [{
+      type: 'gauge',
+      startAngle: 180, endAngle: 0, min: 0, max,
+      splitNumber: 8,
+      axisLine: { lineStyle: { width: 20, color: [[0.7,'#10b981'],[0.9,'#f59e0b'],[1,'#ef4444']] } },
+      pointer: { itemStyle: { color: 'auto' } },
+      axisLabel: { distance: 20, fontSize: 11 },
+      detail: { valueAnimation: true, formatter: `{value}${unit}`, fontSize: 24, fontWeight: 'bold', offsetCenter: [0,'70%'] },
+      data: [{ value }]
+    }]
+  };
+  return <EChart option={option} />;
 }

@@ -1,28 +1,45 @@
-import ReactECharts from 'echarts-for-react';
-import { fmt } from '@/lib/num';
+import EChart from './EChart';
 
-export function LineChart({ data, unit='', xLabel='', yLabel='' }:{
-  data: Array<{ bucket?: string; ts?: string; series?: string|null; value: number }>;
-  unit?: string; xLabel?: string; yLabel?: string;
-}) {
-  const seriesMap: Record<string, {x:string;y:number}[]> = {};
-  (data||[]).forEach(r=>{
-    const k = r.series ?? 'value';
-    (seriesMap[k] ||= []).push({x: r.bucket || r.ts || '', y: Number(r.value||0)});
+interface LineChartProps {
+  data: Array<{ bucket?: string; ts?: string; series?: string; value: number }>;
+  unit?: string;
+  xLabel?: string;
+  yLabel?: string;
+}
+
+export default function LineChart({ data, unit = '', xLabel = '', yLabel = '' }: LineChartProps) {
+  const grouped = new Map<string, Array<{ x: string; y: number }>>();
+  data.forEach(row => {
+    const s = row.series || 'value';
+    const x = row.bucket || row.ts || '';
+    if (!grouped.has(s)) grouped.set(s, []);
+    grouped.get(s)!.push({ x, y: row.value });
   });
-  const first = Object.values(seriesMap)[0] ?? [];
-  const x = first.map(p=>p.x);
+  const first = grouped.values().next().value || [];
+  const xAxisData = first.map(p => p.x);
+
+  const series = Array.from(grouped.entries()).map(([name, points]) => ({
+    name,
+    type: 'line',
+    smooth: true,
+    showSymbol: true,
+    data: points.map(p => p.y)
+  }));
 
   const option = {
-    grid: { top: 18, right: 16, bottom: 36, left: 52, containLabel: true },
-    tooltip: { trigger: 'axis' },
-    legend: Object.keys(seriesMap).length>1 ? { top: 0, left: 8, icon: 'circle', itemHeight: 8, textStyle:{fontSize:10} } : undefined,
-    xAxis: { type:'category', boundaryGap:false, data:x, axisLabel:{interval:'auto', rotate: x.length>16?30:0, fontSize:10} },
-    yAxis: { type:'value', axisLabel:{ formatter: (v:number)=>fmt(v, unit), fontSize:10 }, name: yLabel, nameGap: 30, nameLocation:'middle' },
-    dataZoom: x.length>24 ? [{type:'inside'},{type:'slider', height:12, bottom:12}] : undefined,
-    series: Object.entries(seriesMap).map(([name,pts])=>({
-      name, type:'line', smooth:true, showSymbol:false, sampling:'lttb', data: pts.map(p=>p.y)
-    })),
+    grid: { top: 32, right: 24, bottom: 48, left: 56 },
+    tooltip: {
+      trigger: 'axis',
+      formatter: (params: any[]) => {
+        let r = `${params[0].axisValue}`;
+        params.forEach(item => { r += `<br/>${item.marker} ${item.seriesName}: ${item.value}${unit}`; });
+        return r;
+      }
+    },
+    legend: series.length > 1 ? { bottom: 0 } : undefined,
+    xAxis: { type: 'category', name: xLabel, nameLocation: 'middle', nameGap: 30, data: xAxisData, axisLabel: { rotate: 30, fontSize: 11 } },
+    yAxis: { type: 'value', name: yLabel, nameLocation: 'middle', nameGap: 45, axisLabel: { formatter: (v: number) => `${v}${unit}` } },
+    series
   };
-  return <ReactECharts option={option} style={{height:270}} notMerge />;
+  return <EChart option={option} />;
 }

@@ -41,13 +41,8 @@ export default function DashboardPage({
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {kpis.map(meta => (
-          <KpiCardBackendDriven 
-            key={meta.kpi_key} 
-            kpiMeta={meta} 
-            useLiveData 
-            defaultRange={defaultRange} 
-          />
+        {kpis.map(k => (
+          <KpiCardBackendDriven key={k.kpi_key} kpiKey={k.kpi_key} useLiveData defaultRange={defaultRange} />
         ))}
       </div>
     </div>

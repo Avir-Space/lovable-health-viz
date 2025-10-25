@@ -17,12 +17,14 @@ import FuelEfficiency from "./pages/dashboards/FuelEfficiency";
 import FinancialProcurement from "./pages/dashboards/FinancialProcurement";
 import CrewDutySnapshot from "./pages/dashboards/CrewDutySnapshot";
 import NotFound from "./pages/NotFound";
+import KpiSelfTest from "./components/KpiSelfTest";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <KpiSelfTest />
       <Toaster />
       <Sonner />
       <BrowserRouter>

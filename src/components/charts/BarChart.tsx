@@ -1,18 +1,14 @@
-import ReactECharts from 'echarts-for-react';
-import { fmt } from '@/lib/num';
+import EChart from './EChart';
 
-export function BarChart({ data, unit='', xLabel='', yLabel='' }:{
-  data: Array<{category:string; value:number}>;
-  unit?: string; xLabel?: string; yLabel?: string;
-}) {
-  const cats=(data||[]).map(d=>d.category);
-  const vals=(data||[]).map(d=>Number(d.value||0));
-  const option={
-    grid:{ top:18, right:12, bottom:48, left:52, containLabel:true },
-    tooltip:{ trigger:'axis', axisPointer:{type:'shadow'} },
-    xAxis:{ type:'category', data:cats, axisLabel:{ fontSize:10, rotate: cats.length>8?25:0 } },
-    yAxis:{ type:'value', axisLabel:{ formatter:(v:number)=>fmt(v, unit), fontSize:10 }, name:yLabel, nameGap:28, nameLocation:'middle' },
-    series:[{ type:'bar', data:vals, barMaxWidth:28, itemStyle:{ borderRadius:[4,4,0,0] } }],
+export default function BarChart({ data, unit = '', xLabel = '', yLabel = '' }: { data: Array<{ category: string; value: number }>; unit?: string; xLabel?: string; yLabel?: string; }) {
+  const categories = data.map(d => d.category);
+  const values = data.map(d => d.value);
+  const option = {
+    grid: { top: 32, right: 24, bottom: 60, left: 56 },
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: (p: any[]) => `${p[0].axisValue}<br/>${p[0].marker} ${p[0].value}${unit}` },
+    xAxis: { type: 'category', name: xLabel, nameLocation: 'middle', nameGap: 45, data: categories, axisLabel: { rotate: 30, fontSize: 11 } },
+    yAxis: { type: 'value', name: yLabel, nameLocation: 'middle', nameGap: 45, axisLabel: { formatter: (v: number) => `${v}${unit}` } },
+    series: [{ type: 'bar', data: values }]
   };
-  return <ReactECharts option={option} style={{height:270}} notMerge />;
+  return <EChart option={option} />;
 }

@@ -3,19 +3,19 @@ import { KpiCardBackendDriven } from '@/components/KpiCardBackendDriven';
 
 export default function CrewDutySnapshot() {
   const { kpis, isLoading, error } = useDashboardKpis('crew-duty-snapshot');
-
-  if (isLoading) return <div className="p-6">Loading dashboard…</div>;
-  if (error) return <div className="p-6 text-destructive">Failed to load dashboard</div>;
+  
+  if (isLoading) return <div className="p-6 text-sm text-muted-foreground">Loading dashboard…</div>;
+  if (error) return <div className="p-6 text-sm text-red-600">Failed to load dashboard</div>;
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4">
       <div>
-        <h1 className="text-2xl font-semibold">Crew & Duty Snapshot</h1>
-        <p className="text-sm text-muted-foreground">Duty compliance, rest compliance, fatigue risk</p>
+        <h1 className="text-xl font-semibold">Crew & Duty Snapshot</h1>
+        <p className="text-sm text-muted-foreground">Live KPIs from Supabase</p>
       </div>
-      <div className="p-6 grid gap-6 lg:grid-cols-2 2xl:grid-cols-3 auto-rows-[minmax(340px,auto)]">
-        {kpis.map(k => (
-          <KpiCardBackendDriven key={k.kpi_key} kpiMeta={k} useLiveData defaultRange="1M" />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {kpis.map((k) => (
+          <KpiCardBackendDriven key={k.kpi_key} kpiKey={k.kpi_key} defaultRange="1M" />
         ))}
       </div>
     </div>

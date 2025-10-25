@@ -1,133 +1,106 @@
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Clock, RefreshCw, Loader2 } from "lucide-react";
-import { useKpiData, type KpiMeta, type KpiRange } from "@/hooks/useKpiData";
-import { LineChart } from "@/components/charts/LineChart";
-import { BarChart } from "@/components/charts/BarChart";
-import { PieChart } from "@/components/charts/PieChart";
-import { GaugeChart } from "@/components/charts/GaugeChart";
-import { NumericChart } from "@/components/charts/NumericChart";
-import { HeatmapChart } from "@/components/charts/HeatmapChart";
-import { TableChart } from "@/components/charts/TableChart";
+import { useState, useMemo } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Loader2 } from 'lucide-react';
+import type { KpiPayload, KpiRange } from '@/types/kpi';
+import { useKpiData } from '@/hooks/useKpiData';
 
-const TIME_SERIES_VARIANTS = new Set(['line', 'sparkline', 'delta']);
-const KPI_RANGES: KpiRange[] = ['1D','1W','2W','1M','6M','1Y'];
+import LineChart from '@/components/charts/LineChart';
+import BarChart from '@/components/charts/BarChart';
+import PieChart from '@/components/charts/PieChart';
+import GaugeChart from '@/components/charts/GaugeChart';
+import HeatmapChart from '@/components/charts/HeatmapChart';
+import NumericChart from '@/components/charts/NumericChart';
+import TableChart from '@/components/charts/TableChart';
+import DualAxisLine from '@/components/charts/DualAxisLine';
 
-interface KpiCardBackendDrivenProps {
-  kpiMeta: KpiMeta;
-  sources?: Array<{ name: string }>;
-  useLiveData?: boolean;
-  defaultRange?: KpiRange;
-  titleOverride?: string;
+const RANGES: KpiRange[] = ['1D','1W','2W','1M','6M','1Y'];
+const TS_VARIANTS = new Set(['line','dualAxis']);
+
+function Header({ title, synced }: { title: string; synced?: string }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <div className="font-semibold truncate">{title}</div>
+      <div className="text-xs text-muted-foreground">{synced || 'Not synced'}</div>
+    </div>
+  );
 }
 
-export function KpiCardBackendDriven({
-  kpiMeta,
-  sources = [],
-  useLiveData = true,
-  defaultRange = '1M',
-  titleOverride,
-}: KpiCardBackendDrivenProps) {
-  const [selectedRange, setSelectedRange] = useState<KpiRange>(defaultRange);
-  
-  const showRanges = TIME_SERIES_VARIANTS.has(kpiMeta.variant) || !!kpiMeta.config?.dualAxis;
-  
-  const { payload, isLoading, isValidating, error, refresh } = useKpiData(
-    kpiMeta.kpi_key,
-    selectedRange,
-    useLiveData
-  );
+export function KpiCardBackendDriven({ kpiKey, defaultRange = '1M', useLiveData = true }: { kpiKey: string; defaultRange?: KpiRange; useLiveData?: boolean; }) {
+  const [range, setRange] = useState<KpiRange>(defaultRange);
+  const { payload, isLoading, isValidating, error, refresh } = useKpiData(kpiKey, range, useLiveData);
 
-  const title = titleOverride ?? (kpiMeta?.name || kpiMeta.kpi_key);
-  const unit = kpiMeta?.unit || '';
+  const { meta, timeseries = [], categories = [], heatmap = [], tableRows = [], latest } = payload || ({} as KpiPayload);
+  const isTimeseries = meta?.variant && TS_VARIANTS.has(meta.variant);
+
+  const synced = payload?.generated_at ? `Synced just now` : 'Not synced';
+
+  const sources = useMemo(() => {
+    const key = kpiKey.toLowerCase();
+    if (key.includes('aog') || key.includes('airworthiness')) return ['AMOS','TRAX'];
+    if (key.includes('spare') || key.includes('inventory')) return ['SAP','Ramco','AMOS'];
+    if (key.includes('work_order') || key.includes('work_packages')) return ['AMOS','SAP'];
+    if (key.includes('tech_delay') || key.includes('deferral') || key.includes('mel')) return ['AMOS','TRAX'];
+    return ['AMOS'];
+  }, [kpiKey]);
 
   const renderChart = () => {
-    if (error) {
-      return (
-        <div className="h-[240px] flex flex-col items-center justify-center gap-2">
-          <div className="text-sm text-destructive">Failed to load data</div>
-          <Button size="sm" variant="outline" onClick={() => refresh()}>
-            Retry
-          </Button>
-        </div>
-      );
-    }
+    if (isLoading) return <div className="p-10 text-sm text-muted-foreground">Loading…</div>;
+    if (error) return <div className="p-10 text-sm text-red-600">Failed to load</div>;
+    if (!payload) return <div className="p-10 text-sm text-muted-foreground">No data</div>;
 
-    if (isLoading || !payload) {
-      return <div className="h-[240px] flex items-center justify-center text-muted-foreground">Loading...</div>;
-    }
-
-    const xLabel = kpiMeta.x_axis ?? '';
-    const yLabel = kpiMeta.y_axis ?? '';
-
-    switch (kpiMeta.variant) {
+    switch (meta.variant) {
       case 'line':
-      case 'sparkline':
-      case 'delta':
-        return <LineChart data={payload.timeseries ?? []} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
-
-      case 'gauge': {
-        const val = payload?.latest?.value ?? payload?.timeseries?.at(-1)?.value ?? 0;
-        return <GaugeChart value={val} unit={unit || '%'} />;
-      }
-
-      case 'numeric': {
-        const val = payload?.latest?.value ?? payload?.timeseries?.at(-1)?.value ?? 0;
-        return <NumericChart value={val} unit={unit} />;
-      }
-
+        return <LineChart data={timeseries} unit={meta.unit || ''} xLabel={meta.x_axis || ''} yLabel={meta.y_axis || ''} />;
+      case 'dualAxis':
+        return (
+          <DualAxisLine
+            data={timeseries}
+            seriesMap={meta.config?.dualAxis?.seriesMap || { value: 0 }}
+            leftName={meta.y_axis || ''}
+            rightName={meta.config?.dualAxis?.rightAxisName || ''}
+            leftUnit={meta.unit || ''}
+            rightUnit={meta.config?.dualAxis?.rightAxisUnit || ''}
+            xLabel={meta.x_axis || ''}
+          />
+        );
       case 'bar':
-      case 'column':
-        return <BarChart data={payload.categories ?? []} unit={unit} xLabel={xLabel} yLabel={yLabel} />;
-
+        return <BarChart data={categories.map(c => ({ category: c.category || '', value: c.value }))} unit={meta.unit || ''} xLabel={meta.x_axis || ''} yLabel={meta.y_axis || ''} />;
       case 'pie':
-        return <PieChart data={payload.categories ?? []} unit={unit} />;
-
+        return <PieChart data={categories.map(c => ({ category: c.category || '', value: c.value }))} unit={meta.unit || ''} />;
+      case 'gauge':
+        return <GaugeChart value={latest?.value ?? 0} unit={meta.unit || '%'} />;
       case 'heatmap':
-        return <HeatmapChart data={payload.heatmap ?? []} xLabel={xLabel} yLabel={yLabel} />;
-
+        return <HeatmapChart data={heatmap.map(h => ({ x: h.x || h.category || '', y: h.y || h.series || '', value: h.value }))} xLabel={meta.x_axis || ''} yLabel={meta.y_axis || ''} />;
       case 'table':
-        return <TableChart rows={payload.tableRows ?? []} />;
-
+        return <TableChart rows={tableRows || []} />;
+      case 'numeric':
       default:
-        return <div className="h-[240px] flex items-center justify-center text-muted-foreground">Unsupported variant</div>;
+        return <NumericChart value={latest?.value ?? 0} unit={meta.unit || ''} label={meta.name} />;
     }
   };
 
-  const syncedTime = payload?.generated_at 
-    ? `Synced ${new Date(payload.generated_at).toLocaleString()}`
-    : 'Not synced';
-
   return (
-    <div className="rounded-2xl border bg-card shadow-sm overflow-hidden h-[340px] flex flex-col">
-      <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-2 text-xs text-muted-foreground">
-        <div>{payload?.generated_at ? `Synced ${new Date(payload.generated_at).toLocaleString()}` : 'Not synced'}</div>
-        <div className="flex items-center gap-2">
-          {showRanges && (
-            <div className="flex gap-1">
-              {(['1D','1W','2W','1M','6M','1Y'] as KpiRange[]).map(r => (
-                <button
-                  key={r}
-                  className={`rounded-md px-2 py-1 border text-[11px] ${r===selectedRange ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
-                  onClick={() => setSelectedRange(r)}
-                >{r}</button>
-              ))}
-            </div>
-          )}
-          <button className="rounded-md border px-2 py-1 text-[11px]" onClick={() => refresh()} disabled={isValidating}>
-            {isValidating ? 'Syncing…' : 'Sync'}
-          </button>
+    <Card className="p-4 space-y-4">
+      <Header title={meta?.name || kpiKey} synced={synced} />
+      {isTimeseries ? (
+        <div className="flex flex-wrap gap-2">
+          {RANGES.map(r => (
+            <Button key={r} size="sm" variant={r === range ? 'default' : 'outline'} onClick={() => setRange(r)}>{r}</Button>
+          ))}
+          <Button size="sm" variant="secondary" onClick={() => refresh()}>
+            {isValidating ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : null}
+            Sync now
+          </Button>
         </div>
-      </div>
+      ) : null}
 
-      <div className="px-4 font-medium text-sm truncate">{title}</div>
+      <div className="min-h-[240px]">{renderChart()}</div>
 
-      <div className="flex-1 px-2 pb-3">
-        {renderChart()}
+      <div className="flex items-center gap-2 pt-2">
+        {sources.map(s => <Badge key={s} variant="secondary">{s}</Badge>)}
       </div>
-    </div>
+    </Card>
   );
 }
