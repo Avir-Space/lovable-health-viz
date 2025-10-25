@@ -1,7 +1,15 @@
 import React from 'react';
 import ReactECharts from 'echarts-for-react';
 
-type Props = { option: any; style?: React.CSSProperties };
-export default function EChart({ option, style }: Props) {
-  return <ReactECharts option={option} style={style || { height: 280, width: '100%' }} notMerge />;
+export default function EChart({ option, height = 220 }: { option: any; height?: number }) {
+  return (
+    <div className="w-full" style={{ height }}>
+      <ReactECharts
+        option={option}
+        notMerge
+        style={{ height: '100%', width: '100%' }}
+        opts={{ renderer: 'svg' }}
+      />
+    </div>
+  );
 }

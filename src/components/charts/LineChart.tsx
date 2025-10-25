@@ -1,45 +1,28 @@
 import EChart from './EChart';
 
-interface LineChartProps {
-  data: Array<{ bucket?: string; ts?: string; series?: string; value: number }>;
-  unit?: string;
-  xLabel?: string;
-  yLabel?: string;
-}
-
-export default function LineChart({ data, unit = '', xLabel = '', yLabel = '' }: LineChartProps) {
-  const grouped = new Map<string, Array<{ x: string; y: number }>>();
-  data.forEach(row => {
-    const s = row.series || 'value';
-    const x = row.bucket || row.ts || '';
-    if (!grouped.has(s)) grouped.set(s, []);
-    grouped.get(s)!.push({ x, y: row.value });
+export default function LineChart({ data, unit = '', xLabel = '', yLabel = '' }: {
+  data: Array<{ ts?: string | null; bucket?: string | null; series?: string | null; value: number | null }>;
+  unit?: string; xLabel?: string; yLabel?: string;
+}) {
+  const seriesMap: Record<string, number[]> = {};
+  const x: string[] = [];
+  (data || []).forEach((r) => {
+    const key = r.series || 'value';
+    if (!seriesMap[key]) seriesMap[key] = [];
+    const xv = r.bucket || r.ts || '';
+    if (x.indexOf(xv) === -1) x.push(xv);
+    seriesMap[key].push(typeof r.value === 'number' ? r.value : 0);
   });
-  const first = grouped.values().next().value || [];
-  const xAxisData = first.map(p => p.x);
-
-  const series = Array.from(grouped.entries()).map(([name, points]) => ({
-    name,
-    type: 'line',
-    smooth: true,
-    showSymbol: true,
-    data: points.map(p => p.y)
+  const series = Object.entries(seriesMap).map(([name, vals]) => ({
+    name, type: 'line', smooth: true, showSymbol: false, data: vals,
   }));
-
   const option = {
-    grid: { top: 32, right: 24, bottom: 48, left: 56 },
-    tooltip: {
-      trigger: 'axis',
-      formatter: (params: any[]) => {
-        let r = `${params[0].axisValue}`;
-        params.forEach(item => { r += `<br/>${item.marker} ${item.seriesName}: ${item.value}${unit}`; });
-        return r;
-      }
-    },
+    grid: { top: 24, right: 16, bottom: 36, left: 44 },
+    tooltip: { trigger: 'axis' },
     legend: series.length > 1 ? { bottom: 0 } : undefined,
-    xAxis: { type: 'category', name: xLabel, nameLocation: 'middle', nameGap: 30, data: xAxisData, axisLabel: { rotate: 30, fontSize: 11 } },
-    yAxis: { type: 'value', name: yLabel, nameLocation: 'middle', nameGap: 45, axisLabel: { formatter: (v: number) => `${v}${unit}` } },
-    series
+    xAxis: { type: 'category', name: xLabel, data: x, axisLabel: { rotate: 30, fontSize: 11 } },
+    yAxis: { type: 'value', name: yLabel, axisLabel: { formatter: (v: number) => `${v}${unit}` } },
+    series,
   };
   return <EChart option={option} />;
 }

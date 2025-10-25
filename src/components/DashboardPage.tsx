@@ -1,5 +1,5 @@
 import { useDashboardKpis } from "@/hooks/useKpiData";
-import { KpiCardBackendDriven } from "@/components/KpiCardBackendDriven";
+import KpiCardBackendDriven from "@/components/KpiCardBackendDriven";
 import type { KpiRange } from "@/lib/kpi-utils";
 
 interface DashboardPageProps {
@@ -42,7 +42,15 @@ export default function DashboardPage({
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {kpis.map(k => (
-          <KpiCardBackendDriven key={k.kpi_key} kpiKey={k.kpi_key} useLiveData defaultRange={defaultRange} />
+          <KpiCardBackendDriven 
+            key={k.kpi_key} 
+            kpi_key={k.kpi_key} 
+            name={k.name}
+            variant={k.variant as any}
+            unit={k.unit}
+            useLiveData 
+            defaultRange={defaultRange} 
+          />
         ))}
       </div>
     </div>
