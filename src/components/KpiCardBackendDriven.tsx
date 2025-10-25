@@ -24,30 +24,24 @@ export default function KpiCardBackendDriven({
   const showRanges = TIME_SERIES.includes(variant);
 
   const body = useMemo(() => {
-    if (!payload) return <div className="text-sm">No data.</div>;
+    if (!payload) return <div className="text-xs text-muted-foreground">No data.</div>;
     const p = payload;
 
     switch (variant) {
-      case 'line':
-        return <LineChart data={p.timeseries || []} unit={p.meta.unit || ''} />;
-      case 'bar':
-        return <BarChart data={p.categories || []} unit={p.meta.unit || ''} />;
-      case 'pie':
-        return <PieChart data={p.categories || []} unit={p.meta.unit || ''} />;
+      case 'line':    return <LineChart data={p.timeseries || []} unit={p.meta.unit || ''} />;
+      case 'bar':     return <BarChart  data={p.categories || []} unit={p.meta.unit || ''} />;
+      case 'pie':     return <PieChart  data={p.categories || []} unit={p.meta.unit || ''} />;
       case 'gauge': {
         const v = p.latest?.value ?? (p.timeseries?.at(-1)?.value ?? 0);
         return <GaugeChart value={Number(v) || 0} unit={p.meta.unit || '%'} />;
       }
-      case 'heatmap':
-        return <Heatmap data={p.heatmap || []} />;
-      case 'table':
-        return <TableGrid rows={p.tableRows || []} />;
+      case 'heatmap': return <Heatmap  data={p.heatmap || []} />;
+      case 'table':   return <TableGrid rows={p.tableRows || []} />;
       case 'numeric': {
         const v = p.latest?.value ?? (p.timeseries?.at(-1)?.value ?? 0);
         return <div className="text-3xl font-semibold">{(Number(v) || 0).toLocaleString()}{p.meta.unit || ''}</div>;
       }
-      default:
-        return <div>Unsupported variant</div>;
+      default:        return <div className="text-xs">Unsupported variant</div>;
     }
   }, [payload, variant]);
 
@@ -72,8 +66,8 @@ export default function KpiCardBackendDriven({
       </div>
 
       <div className="flex-1 min-h-[170px]">
-        {error && <div className="text-xs text-red-600 mb-2">Failed to load data.</div>}
         {isLoading ? <div className="text-xs text-muted-foreground">Loading…</div> : body}
+        {error && <div className="text-[11px] text-red-600 mt-2">Failed to load. Check RPC/logs.</div>}
       </div>
 
       <div className="text-[10px] text-muted-foreground">
