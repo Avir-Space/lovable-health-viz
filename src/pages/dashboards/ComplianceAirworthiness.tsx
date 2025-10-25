@@ -1,51 +1,20 @@
-import { useDashboardKpis } from '@/hooks/useKpiData';
-import KpiCardBackendDriven from '@/components/KpiCardBackendDriven';
-import { Loader2 } from 'lucide-react';
-
-const DASHBOARD_KEY = 'compliance-airworthiness';
+import { KpiCard } from '@/components/kpi/KpiCard';
 
 export default function ComplianceAirworthiness() {
-  const { kpis, isLoading, error } = useDashboardKpis(DASHBOARD_KEY);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="animate-spin mr-2 h-6 w-6" />
-        <span className="text-sm text-muted-foreground">Loading dashboard…</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-6 text-sm text-destructive">
-        Failed to load KPI list: {String(error)}
-      </div>
-    );
-  }
-
   return (
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold mb-2">Compliance & Airworthiness</h1>
         <p className="text-muted-foreground">
-          Track regulatory compliance, certifications, and airworthiness status
+          Monitor regulatory compliance, MEL/CDL items, and airworthiness directives
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {kpis.map((k) => (
-          <KpiCardBackendDriven
-            key={k.kpi_key}
-            kpi_key={k.kpi_key}
-            name={k.name}
-            variant={k.variant as any}
-            unit={k.unit}
-            defaultRange="1M"
-            useLiveData={true}
-            dashboard={DASHBOARD_KEY}
-          />
-        ))}
+        <KpiCard kpiKey="compliance-airworthiness:airworthiness_directives_due" title="Airworthiness Directives Due" variant="bar" />
+        <KpiCard kpiKey="compliance-airworthiness:mel_cdl_items_open" title="MEL/CDL Items Open" variant="line" />
+        <KpiCard kpiKey="compliance-airworthiness:audit_findings_open" title="Audit Findings Open" variant="bar" />
+        <KpiCard kpiKey="compliance-airworthiness:compliance_status_by_tail" title="Compliance Status by Tail" variant="table" />
       </div>
     </div>
   );
