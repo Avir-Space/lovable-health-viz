@@ -6,7 +6,6 @@ import PieChart from './charts/PieChart';
 import GaugeChart from './charts/GaugeChart';
 import Heatmap from './charts/HeatmapChart';
 import TableGrid from './TableGrid';
-import NumericChart from './charts/NumericChart';
 
 const TIME_SERIES: KpiVariant[] = ['line','numeric','gauge'];
 
@@ -27,6 +26,7 @@ export default function KpiCardBackendDriven({
   const body = useMemo(() => {
     if (!payload) return <div className="text-sm">No data.</div>;
     const p = payload;
+
     switch (variant) {
       case 'line':
         return <LineChart data={p.timeseries || []} unit={p.meta.unit || ''} />;
@@ -34,23 +34,27 @@ export default function KpiCardBackendDriven({
         return <BarChart data={p.categories || []} unit={p.meta.unit || ''} />;
       case 'pie':
         return <PieChart data={p.categories || []} unit={p.meta.unit || ''} />;
-      case 'gauge':
-        return <GaugeChart value={p.latest?.value ?? (p.timeseries?.at(-1)?.value ?? 0)} unit={p.meta.unit || '%'} />;
+      case 'gauge': {
+        const v = p.latest?.value ?? (p.timeseries?.at(-1)?.value ?? 0);
+        return <GaugeChart value={Number(v) || 0} unit={p.meta.unit || '%'} />;
+      }
       case 'heatmap':
         return <Heatmap data={p.heatmap || []} />;
       case 'table':
         return <TableGrid rows={p.tableRows || []} />;
-      case 'numeric':
-        return <NumericChart value={p.latest?.value ?? 0} unit={p.meta.unit || ''} label={p.meta.name} />;
+      case 'numeric': {
+        const v = p.latest?.value ?? (p.timeseries?.at(-1)?.value ?? 0);
+        return <div className="text-3xl font-semibold">{(Number(v) || 0).toLocaleString()}{p.meta.unit || ''}</div>;
+      }
       default:
         return <div>Unsupported variant</div>;
     }
   }, [payload, variant]);
 
   return (
-    <div className="bg-white rounded-xl border p-3 flex flex-col gap-2" style={{ minHeight: 260 }}>
+    <div className="bg-white rounded-xl border p-3 flex flex-col gap-2" style={{ minHeight: 260, overflow: 'hidden' }}>
       <div className="flex items-center justify-between">
-        <div className="text-sm font-medium">{name}</div>
+        <div className="text-sm font-medium truncate pr-2">{name}</div>
         <div className="flex items-center gap-2">
           {showRanges && (
             <div className="flex items-center gap-1">
@@ -58,17 +62,17 @@ export default function KpiCardBackendDriven({
                 <button
                   key={r}
                   onClick={() => setRange(r)}
-                  className={`px-2 py-[3px] rounded text-xs border ${range===r?'bg-blue-600 text-white border-blue-600':'bg-white text-gray-700'}`}
+                  className={`px-2 py-[3px] rounded text-xs border transition ${range===r?'bg-blue-600 text-white border-blue-600':'bg-white text-gray-700'}`}
                 >{r}</button>
               ))}
             </div>
           )}
-          <button onClick={refresh} className="text-xs px-2 py-1 border rounded">Sync</button>
+          <button onClick={() => refresh()} className="text-xs px-2 py-1 border rounded">Sync</button>
         </div>
       </div>
 
-      <div className="flex-1">
-        {error && <div className="text-xs text-red-600 mb-2">Failed to load data — showing fallback.</div>}
+      <div className="flex-1 min-h-[170px]">
+        {error && <div className="text-xs text-red-600 mb-2">Failed to load data.</div>}
         {isLoading ? <div className="text-xs text-muted-foreground">Loading…</div> : body}
       </div>
 

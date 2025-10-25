@@ -1,39 +1,38 @@
-export type KpiRange = '1D' | '1W' | '2W' | '1M' | '6M' | '1Y';
+export type KpiRange = '1D'|'1W'|'2W'|'1M'|'6M'|'1Y';
+export type KpiVariant = 'line'|'bar'|'pie'|'gauge'|'heatmap'|'table'|'numeric';
 
-export interface KpiMeta {
+export type TimeseriesPoint = { ts?: string; bucket?: string; series?: string; value: number };
+export type CategoryPoint  = { category: string; value: number };
+export type HeatmapPoint   = { x: string; y: string; value: number };
+export type TableRow       = Record<string, string|number|null>;
+
+export type KpiMeta = {
   kpi_key: string;
-  dashboard: string;
   name: string;
-  variant: 'line' | 'bar' | 'pie' | 'gauge' | 'heatmap' | 'table' | 'numeric' | 'dualAxis';
+  variant: KpiVariant;
+  unit?: string | null;
   x_axis?: string | null;
   y_axis?: string | null;
-  unit?: string | null;
-  config?: {
-    dualAxis?: {
-      seriesMap: Record<string, 0 | 1>;
-      rightAxisName?: string;
-      rightAxisUnit?: string;
-    };
-    [key: string]: any;
-  } | null;
-}
+  config?: any;
+  dashboard?: string;
+};
 
-export interface KpiDatum {
-  ts?: string;
-  bucket?: string;
-  series?: string | null;
-  category?: string | null;
-  x?: string;
-  y?: string;
-  value: number;
-}
-
-export interface KpiPayload {
+export type KpiPayloadRaw = {
   meta: KpiMeta;
-  timeseries?: KpiDatum[];
-  categories?: KpiDatum[];
-  tableRows?: any[];
-  heatmap?: KpiDatum[];
-  latest?: KpiDatum | null;
+  latest?: { value: number } | null;
+  timeseries?: any[] | null;
+  categories?: any[] | null;
+  heatmap?: any[] | null;
+  tableRows?: any[] | null;
   generated_at?: string;
-}
+};
+
+export type KpiPayloadSafe = {
+  meta: KpiMeta;
+  generated_at?: string;
+  latest?: { value: number } | null;
+  timeseries?: TimeseriesPoint[];
+  categories?: CategoryPoint[];
+  heatmap?: HeatmapPoint[];
+  tableRows?: TableRow[];
+};

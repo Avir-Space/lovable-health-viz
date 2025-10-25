@@ -1,14 +1,12 @@
-import EChart from './EChart';
+import ReactECharts from 'echarts-for-react';
+import { CategoryPoint } from '@/types/kpi';
 
-export default function PieChart({ data, unit = '' }: {
-  data: Array<{ category: string; value: number | null }>;
-  unit?: string;
-}) {
-  const series = (data || []).map(d => ({ name: d.category, value: typeof d.value === 'number' ? d.value : 0 }));
+export default function PieChart({ data, unit = '' }: { data: CategoryPoint[]; unit?: string }) {
+  const seriesData = (data || []).map(d => ({ name: d.category, value: Number(d.value) || 0 }));
   const option = {
     tooltip: { trigger: 'item', formatter: '{b}: {c}'+unit+' ({d}%)' },
     legend: { bottom: 0 },
-    series: [{ type: 'pie', radius: ['55%', '75%'], data: series }],
+    series: [{ type: 'pie', radius: ['50%', '70%'], data: seriesData, label: { show: true } }]
   };
-  return <EChart option={option} />;
+  return <ReactECharts option={option} style={{ height: 180 }} />;
 }

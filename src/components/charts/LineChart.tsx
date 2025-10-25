@@ -1,28 +1,25 @@
-import EChart from './EChart';
+import ReactECharts from 'echarts-for-react';
+import { TimeseriesPoint } from '@/types/kpi';
 
-export default function LineChart({ data, unit = '', xLabel = '', yLabel = '' }: {
-  data: Array<{ ts?: string | null; bucket?: string | null; series?: string | null; value: number | null }>;
-  unit?: string; xLabel?: string; yLabel?: string;
-}) {
-  const seriesMap: Record<string, number[]> = {};
-  const x: string[] = [];
-  (data || []).forEach((r) => {
-    const key = r.series || 'value';
-    if (!seriesMap[key]) seriesMap[key] = [];
-    const xv = r.bucket || r.ts || '';
-    if (x.indexOf(xv) === -1) x.push(xv);
-    seriesMap[key].push(typeof r.value === 'number' ? r.value : 0);
+export default function LineChart({ data, unit = '' }: { data: TimeseriesPoint[]; unit?: string }) {
+  const seriesMap: Record<string, { name: string; data: [string, number][] }> = {};
+  (data || []).forEach(p => {
+    const key = p.series || 'value';
+    if (!seriesMap[key]) seriesMap[key] = { name: key, data: [] };
+    seriesMap[key].data.push([p.bucket || p.ts || '', Number(p.value) || 0]);
   });
-  const series = Object.entries(seriesMap).map(([name, vals]) => ({
-    name, type: 'line', smooth: true, showSymbol: false, data: vals,
+  const x = (seriesMap[Object.keys(seriesMap)[0]]?.data || []).map(d => d[0]);
+  const series = Object.values(seriesMap).map(s => ({
+    name: s.name, type: 'line', smooth: true, showSymbol: false, data: s.data.map(d=>d[1])
   }));
+
   const option = {
-    grid: { top: 24, right: 16, bottom: 36, left: 44 },
-    tooltip: { trigger: 'axis' },
-    legend: series.length > 1 ? { bottom: 0 } : undefined,
-    xAxis: { type: 'category', name: xLabel, data: x, axisLabel: { rotate: 30, fontSize: 11 } },
-    yAxis: { type: 'value', name: yLabel, axisLabel: { formatter: (v: number) => `${v}${unit}` } },
-    series,
+    grid: { top: 20, right: 16, bottom: 28, left: 36 },
+    tooltip: { trigger: 'axis', formatter: (params:any)=>params.map((p:any)=>`${p.seriesName}: ${p.value}${unit}`).join('<br/>') },
+    legend: series.length>1 ? { bottom: 0 } : undefined,
+    xAxis: { type: 'category', data: x, axisLabel: { rotate: 30, fontSize: 10 } },
+    yAxis: { type: 'value', axisLabel: { formatter: (v:number)=>`${v}${unit}` } },
+    series
   };
-  return <EChart option={option} />;
+  return <ReactECharts option={option} style={{ height: 180 }} />;
 }

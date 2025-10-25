@@ -1,13 +1,13 @@
-import EChart from './EChart';
+import ReactECharts from 'echarts-for-react';
 
-export default function GaugeChart({ value = 0, unit = '%' }: { value?: number | null; unit?: string }) {
-  const v = Math.max(0, Math.min(100, typeof value === 'number' ? value : 0));
+export default function GaugeChart({ value, unit = '%' }: { value: number; unit?: string }) {
   const option = {
     series: [{
       type: 'gauge', startAngle: 180, endAngle: 0, min: 0, max: 100,
-      detail: { formatter: `${v}${unit}`, fontSize: 22, offsetCenter: [0, '60%'] },
-      axisLine: { lineStyle: { width: 18 } }, data: [{ value: v }],
-    }],
+      axisLine: { lineStyle: { width: 18 } },
+      detail: { formatter: (v:number)=>`${v}${unit}`, fontSize: 22, offsetCenter: [0,'60%'] },
+      data: [{ value }]
+    }]
   };
-  return <EChart option={option} height={180} />;
+  return <ReactECharts option={option} style={{ height: 180 }} />;
 }
