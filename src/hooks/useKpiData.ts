@@ -30,6 +30,7 @@ export function useKpiData(kpi_key: string, variant: KpiVariant, range: KpiRange
       dedupingInterval: 30000,
       shouldRetryOnError: true,
       errorRetryCount: 2,
+      errorRetryInterval: 5000,
     }
   );
   
@@ -37,7 +38,7 @@ export function useKpiData(kpi_key: string, variant: KpiVariant, range: KpiRange
     payload: data, 
     error, 
     isLoading, 
-    refresh: mutate 
+    refresh: () => mutate()
   };
 }
 

@@ -1,12 +1,25 @@
+import { useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { CategoryPoint } from '@/types/kpi';
+import { makePieOptions, DASHBOARD_PALETTES } from '@/lib/ui/chartOptions';
 
-export default function PieChart({ data, unit = '' }: { data: CategoryPoint[]; unit?: string }) {
-  const seriesData = (data || []).map(d => ({ name: d.category, value: Number(d.value) || 0 }));
-  const option = {
-    tooltip: { trigger: 'item', formatter: '{b}: {c}'+unit+' ({d}%)' },
-    legend: { bottom: 0 },
-    series: [{ type: 'pie', radius: ['50%', '70%'], data: seriesData, label: { show: true } }]
-  };
-  return <ReactECharts option={option} style={{ height: 180 }} />;
+export default function PieChart({
+  data,
+  unit = '',
+  dashboard,
+}: {
+  data: CategoryPoint[];
+  unit?: string;
+  dashboard?: string;
+}) {
+  const option = useMemo(() => {
+    const pieData = (data || []).map((d) => ({
+      name: d.category,
+      value: Number(d.value) || 0,
+    }));
+    const palette = dashboard ? DASHBOARD_PALETTES[dashboard] : undefined;
+    return makePieOptions({ data: pieData, unit, palette });
+  }, [data, unit, dashboard]);
+
+  return <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />;
 }

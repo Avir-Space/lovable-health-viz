@@ -1,15 +1,23 @@
+import { useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { CategoryPoint } from '@/types/kpi';
+import { makeBarOptions, DASHBOARD_PALETTES } from '@/lib/ui/chartOptions';
 
-export default function BarChart({ data, unit = '' }: { data: CategoryPoint[]; unit?: string }) {
-  const cats = (data || []).map(d => d.category);
-  const vals = (data || []).map(d => Number(d.value) || 0);
-  const option = {
-    grid: { top: 20, right: 10, bottom: 36, left: 36 },
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: (p:any)=>`${p[0].axisValue}: ${p[0].value}${unit}` },
-    xAxis: { type: 'category', data: cats, axisLabel: { rotate: 25, fontSize: 10 } },
-    yAxis: { type: 'value', axisLabel: { formatter: (v:number)=>`${v}${unit}` } },
-    series: [{ type: 'bar', data: vals, itemStyle: { color: '#3b82f6' } }]
-  };
-  return <ReactECharts option={option} style={{ height: 180 }} />;
+export default function BarChart({
+  data,
+  unit = '',
+  dashboard,
+}: {
+  data: CategoryPoint[];
+  unit?: string;
+  dashboard?: string;
+}) {
+  const option = useMemo(() => {
+    const x = (data || []).map((d) => d.category);
+    const values = (data || []).map((d) => Number(d.value) || 0);
+    const palette = dashboard ? DASHBOARD_PALETTES[dashboard] : undefined;
+    return makeBarOptions({ x, values, unit, palette });
+  }, [data, unit, dashboard]);
+
+  return <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />;
 }
