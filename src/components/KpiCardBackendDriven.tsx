@@ -125,22 +125,21 @@ export default function KpiCardBackendDriven({
 
   return (
     <Card className="p-5 hover:shadow-md transition-all hover:scale-[1.01] h-[380px] flex flex-col">
-      <div className="flex items-start justify-between gap-2">
+      <div className="space-y-3">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-[15px] font-semibold leading-5 tracking-tight truncate">
-                  {name}
-                </h4>
-              </div>
+              <h4 className="text-[15px] font-semibold leading-5 tracking-tight">
+                {name}
+              </h4>
             </TooltipTrigger>
             <TooltipContent className="max-w-[420px]">
               <p>{name}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        
+        <div className="flex items-center gap-2 flex-wrap">
           {showRanges && (
             <RangeChips selected={range} onChange={setRange} />
           )}
