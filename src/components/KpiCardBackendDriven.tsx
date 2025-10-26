@@ -13,6 +13,7 @@ import BarChart from './charts/BarChart';
 import PieChart from './charts/PieChart';
 import GaugeChart from './charts/GaugeChart';
 import Heatmap from './charts/HeatmapChart';
+import NumericChart from './charts/NumericChart';
 import TableGrid from './TableGrid';
 
 const TIME_SERIES: KpiVariant[] = ['line', 'numeric', 'gauge'];
@@ -110,10 +111,11 @@ export default function KpiCardBackendDriven({
       case 'numeric': {
         const v = p.latest?.value ?? (p.timeseries?.at(-1)?.value ?? 0);
         return (
-          <div className="text-3xl font-semibold">
-            {(Number(v) || 0).toLocaleString()}
-            {p.meta.unit || ''}
-          </div>
+          <NumericChart
+            value={Number(v) || 0}
+            unit={p.meta.unit || ''}
+            align="left"
+          />
         );
       }
       default:
