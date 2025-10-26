@@ -23,19 +23,26 @@ export function makeLineOptions({
 }): EChartsOption {
   return {
     color: palette,
-    grid: { top: 24, right: 16, bottom: 40, left: 48 },
+    grid: { top: 24, right: 16, bottom: 54, left: 56 },
     tooltip: {
       trigger: 'axis',
-      formatter: (params: any) =>
-        params.map((p: any) => `${p.marker} ${p.seriesName}: ${p.value}${unit}`).join('<br/>'),
+      formatter: (params: any) => {
+        const axis = params?.[0]?.axisValue ?? '';
+        const lines = params
+          .map((p: any) => `${p.marker} ${p.seriesName}: ${p.value}${unit}`)
+          .join('<br/>');
+        return `<strong>${axis}</strong><br/>${lines}`;
+      },
     },
     xAxis: {
       type: 'category',
       data: x,
       axisLabel: {
-        rotate: x.length > 8 ? 45 : 0,
+        rotate: 28,
         fontSize: 11,
         color: '#71717a',
+        hideOverlap: true,
+        formatter: (v: string) => (v?.length > 10 ? v.slice(0, 10) : v),
       },
     },
     yAxis: {
@@ -45,15 +52,16 @@ export function makeLineOptions({
         fontSize: 11,
         color: '#71717a',
       },
+      splitLine: { lineStyle: { color: '#f1f5f9' } },
     },
     legend:
       series.length > 1
-        ? { bottom: 0, textStyle: { fontSize: 11 } }
+        ? { bottom: 4, textStyle: { fontSize: 11 } }
         : undefined,
     series: series.map((s) => ({
       type: 'line',
       smooth: true,
-      showSymbol: true,
+      showSymbol: false,
       data: s.data,
       name: s.name,
     })),
@@ -73,7 +81,7 @@ export function makeBarOptions({
 }): EChartsOption {
   return {
     color: [palette[0] ?? '#3b82f6'],
-    grid: { top: 24, right: 16, bottom: 48, left: 48 },
+    grid: { top: 24, right: 16, bottom: 56, left: 56 },
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
@@ -84,9 +92,10 @@ export function makeBarOptions({
       type: 'category',
       data: x,
       axisLabel: {
-        rotate: x.length > 8 ? 45 : 0,
+        rotate: 28,
         fontSize: 11,
         color: '#71717a',
+        hideOverlap: true,
       },
     },
     yAxis: {
@@ -96,6 +105,7 @@ export function makeBarOptions({
         fontSize: 11,
         color: '#71717a',
       },
+      splitLine: { lineStyle: { color: '#f1f5f9' } },
     },
     series: [
       {
@@ -123,23 +133,27 @@ export function makePieOptions({
     tooltip: {
       trigger: 'item',
       formatter: (p: any) =>
-        `${p.name}<br/>${p.marker} ${p.value}${unit} (${((p.value / total) * 100).toFixed(1)}%)`,
+        `${p.marker} ${p.name}: <b>${p.value}${unit}</b> (${p.percent}%)`,
     },
     legend: {
+      type: 'scroll',
       orient: 'vertical',
       right: 0,
-      top: 'center',
+      top: 'middle',
       textStyle: { fontSize: 11 },
     },
     series: [
       {
         type: 'pie',
         radius: ['55%', '75%'],
+        center: ['35%', '50%'],
+        avoidLabelOverlap: true,
         itemStyle: {
           borderRadius: 8,
           borderColor: '#fff',
           borderWidth: 2,
         },
+        labelLine: { length: 12, length2: 8 },
         label: { show: false },
         emphasis: {
           label: { show: true, fontSize: 12, fontWeight: 'bold' },
@@ -182,8 +196,9 @@ export function makeGaugeOptions({
         splitLine: { length: 10 },
         detail: {
           formatter: `{value}${unit}`,
-          fontSize: 22,
-          offsetCenter: [0, '60%'],
+          fontSize: 24,
+          fontWeight: 700,
+          offsetCenter: [0, '70%'],
         },
         data: [{ value }],
       },

@@ -22,7 +22,7 @@ async function fetchPayload(kpi_key: string, range: KpiRange): Promise<KpiPayloa
 
 export function useKpiData(kpi_key: string, variant: KpiVariant, range: KpiRange, enabled = true) {
   const key = enabled && kpi_key ? ['kpi', kpi_key, range] : null;
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
     key, 
     () => fetchPayload(kpi_key, range), 
     {
@@ -37,7 +37,8 @@ export function useKpiData(kpi_key: string, variant: KpiVariant, range: KpiRange
   return { 
     payload: data, 
     error, 
-    isLoading, 
+    isLoading,
+    isValidating, 
     refresh: () => mutate()
   };
 }

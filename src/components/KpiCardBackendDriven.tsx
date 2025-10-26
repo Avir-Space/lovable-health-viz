@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { KpiRange, KpiVariant, useKpiData } from '@/hooks/useKpiData';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { RangeChips } from './ui/range-chips';
 import { Alert, AlertDescription } from './ui/alert';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from './ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
 import LineChart from './charts/LineChart';
 import BarChart from './charts/BarChart';
 import PieChart from './charts/PieChart';
@@ -33,13 +35,30 @@ export default function KpiCardBackendDriven({
   dashboard?: string;
 }) {
   const [range, setRange] = useState<KpiRange>(defaultRange);
-  const { payload, isLoading, error, refresh } = useKpiData(
+  const { toast } = useToast();
+  const { payload, isLoading, isValidating, error, refresh } = useKpiData(
     kpi_key,
     variant,
     range,
     useLiveData
   );
   const showRanges = TIME_SERIES.includes(variant);
+
+  const handleSync = async () => {
+    try {
+      await refresh();
+      toast({ 
+        title: "Synced", 
+        description: "KPI refreshed successfully." 
+      });
+    } catch (e: any) {
+      toast({ 
+        variant: "destructive", 
+        title: "Sync failed", 
+        description: e?.message ?? "Please check RPC/logs." 
+      });
+    }
+  };
 
   const body = useMemo(() => {
     if (!payload)
@@ -105,11 +124,20 @@ export default function KpiCardBackendDriven({
   return (
     <Card className="p-5 hover:shadow-md transition-all hover:scale-[1.01] h-[380px] flex flex-col">
       <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <h4 className="text-[15px] font-semibold leading-5 tracking-tight truncate" title={name}>
-            {name}
-          </h4>
-        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-[15px] font-semibold leading-5 tracking-tight truncate">
+                  {name}
+                </h4>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[420px]">
+              <p>{name}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <div className="flex items-center gap-2 flex-shrink-0">
           {showRanges && (
             <RangeChips selected={range} onChange={setRange} />
@@ -117,10 +145,17 @@ export default function KpiCardBackendDriven({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => refresh()}
-            className="h-7 px-2 text-[11px]"
-            aria-label="Refresh data"
+            onClick={handleSync}
+            disabled={isValidating}
+            className="h-7 px-2 text-[11px] gap-1.5"
+            aria-label="Sync now"
+            title="Sync now"
           >
+            {isValidating ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5" />
+            )}
             Sync
           </Button>
         </div>
