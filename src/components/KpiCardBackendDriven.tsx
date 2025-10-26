@@ -129,7 +129,7 @@ export default function KpiCardBackendDriven({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <h4 className="text-[15px] font-semibold leading-5 tracking-tight">
+              <h4 className="text-[15px] font-semibold leading-snug tracking-tight break-words">
                 {name}
               </h4>
             </TooltipTrigger>
@@ -148,7 +148,7 @@ export default function KpiCardBackendDriven({
             variant="outline"
             onClick={handleSync}
             disabled={isValidating}
-            className="h-7 px-2 text-[11px] gap-1.5"
+            className="h-7 px-2 text-[11px] gap-1.5 ml-auto"
             aria-label="Sync now"
             title="Sync now"
           >
