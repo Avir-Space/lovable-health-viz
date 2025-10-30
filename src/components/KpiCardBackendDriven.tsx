@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Loader2, RefreshCw, Sparkles } from 'lucide-react';
+import { Loader2, RefreshCw, Sparkles, X } from 'lucide-react';
 import { KpiRange, KpiVariant, useKpiData } from '@/hooks/useKpiData';
 import { useKpiAction } from '@/hooks/useKpiAction';
 import { Card } from './ui/card';
@@ -8,6 +8,7 @@ import { Button } from './ui/button';
 import { RangeChips } from './ui/range-chips';
 import { Alert, AlertDescription } from './ui/alert';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from './ui/tooltip';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from './ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import LineChart from './charts/LineChart';
 import BarChart from './charts/BarChart';
@@ -39,6 +40,7 @@ export default function KpiCardBackendDriven({
   onKpiAction?: (kpi_key: string) => void;
 }) {
   const [range, setRange] = useState<KpiRange>(defaultRange);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { toast } = useToast();
   const { payload, isLoading, isValidating, error, refresh } = useKpiData(
     kpi_key,
@@ -50,11 +52,16 @@ export default function KpiCardBackendDriven({
   const showRanges = TIME_SERIES.includes(variant);
 
   const handleActionClick = () => {
+    setIsDrawerOpen(true);
+    console.info('[AVIR] AI Action clicked for KPI:', kpi_key);
+  };
+
+  const handleDrawerAction = () => {
     if (onKpiAction) {
       onKpiAction(kpi_key);
-    } else {
-      console.info('[AVIR] AI Action clicked for KPI:', kpi_key);
     }
+    console.info('[AVIR] AI Action executed for KPI:', kpi_key);
+    setIsDrawerOpen(false);
   };
 
   const handleSync = async () => {
@@ -192,25 +199,106 @@ export default function KpiCardBackendDriven({
       </div>
 
       {action && (
-        <div 
-          className="mt-3 pt-3 border-t flex flex-wrap justify-between items-end gap-2"
-          aria-label="AI Action"
-        >
-          <div className="flex items-start gap-2 max-w-[70%] flex-1">
-            <Sparkles className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-            <p className="text-[12px] font-medium whitespace-normal break-words leading-snug">
-              {action.action_title}
-            </p>
-          </div>
-          <Button
-            size="sm"
-            onClick={handleActionClick}
-            className="h-7 px-3 text-[11px] shrink-0 ml-auto"
-            aria-label="AI Action CTA"
+        <>
+          <div 
+            className="mt-3 pt-3 border-t flex flex-wrap justify-between items-end gap-2"
+            aria-label="AI Action"
           >
-            {action.action_cta_label}
-          </Button>
-        </div>
+            <div className="flex items-start gap-2 max-w-[70%] flex-1">
+              <Sparkles className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+              <p className="text-[12px] font-medium whitespace-normal break-words leading-snug">
+                {action.action_title}
+              </p>
+            </div>
+            <Button
+              size="sm"
+              onClick={handleActionClick}
+              className="h-7 px-3 text-[11px] shrink-0 ml-auto"
+              aria-label="AI Action CTA"
+            >
+              {action.action_cta_label}
+            </Button>
+          </div>
+
+          <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+            <SheetContent className="w-full sm:max-w-[520px] overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle className="text-lg font-semibold pr-6">{name}</SheetTitle>
+              </SheetHeader>
+              
+              <div className="mt-6 space-y-6">
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    Action
+                  </h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {action.action_title}
+                  </p>
+                </div>
+
+                {action.why_this_action && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground mb-2">
+                      Why this action
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {action.why_this_action}
+                    </p>
+                  </div>
+                )}
+
+                {action.evidence_section && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground mb-2">
+                      Evidence
+                    </h4>
+                    <div className="text-sm text-muted-foreground leading-relaxed space-y-1">
+                      {action.evidence_section.split(/[•\n]/).filter(Boolean).map((item, idx) => (
+                        <div key={idx} className="flex gap-2">
+                          <span className="text-primary">•</span>
+                          <span>{item.trim()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {action.impact_if_ignored && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground mb-2">
+                      If ignored
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {action.impact_if_ignored}
+                    </p>
+                  </div>
+                )}
+
+                {action.expected_gain && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground mb-2">
+                      Expected gain
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {action.expected_gain}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <SheetFooter className="mt-6 pt-4 border-t">
+                <Button 
+                  onClick={handleDrawerAction}
+                  className="w-full"
+                  size="lg"
+                >
+                  {action.action_cta_label}
+                </Button>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
+        </>
       )}
 
       <div className="mt-3 text-[11px] text-muted-foreground flex justify-between items-center">
