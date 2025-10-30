@@ -24,14 +24,15 @@ export function makeLineOptions({
   return {
     color: palette,
     grid: { 
-      top: 24, 
-      right: 16, 
-      bottom: 56, 
-      left: 56,
+      top: 28, 
+      right: 12, 
+      bottom: 42, 
+      left: 52,
       containLabel: true
     },
     tooltip: {
       trigger: 'axis',
+      confine: true,
       formatter: (params: any) => {
         const axis = params?.[0]?.axisValue ?? '';
         const lines = params
@@ -58,6 +59,7 @@ export function makeLineOptions({
         formatter: (v: number) => `${v}${unit}`,
         fontSize: 11,
         color: '#71717a',
+        hideOverlap: true,
       },
       splitLine: { lineStyle: { color: '#f1f5f9' } },
     },
@@ -97,15 +99,16 @@ export function makeBarOptions({
   return {
     color: [palette[0] ?? '#3b82f6'],
     grid: { 
-      top: 24, 
-      right: 16, 
-      bottom: 56, 
-      left: 56,
+      top: 28, 
+      right: 12, 
+      bottom: 42, 
+      left: 52,
       containLabel: true
     },
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
+      confine: true,
       formatter: (p: any) =>
         `${p[0].axisValue}<br/>${p[0].marker} ${p[0].value}${unit}`,
     },
@@ -126,6 +129,7 @@ export function makeBarOptions({
         formatter: (v: number) => `${v}${unit}`,
         fontSize: 11,
         color: '#71717a',
+        hideOverlap: true,
       },
       splitLine: { lineStyle: { color: '#f1f5f9' } },
     },

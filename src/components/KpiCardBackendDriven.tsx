@@ -144,7 +144,7 @@ export default function KpiCardBackendDriven({
 
   return (
     <Card className="p-5 hover:shadow-md transition-all hover:scale-[1.01] h-[380px]">
-      <div className="grid grid-rows-[auto_1fr_auto] h-full gap-3">
+      <div className="grid grid-rows-[auto_1fr] h-full gap-3">
         {/* Row 1: Header */}
         <div className="space-y-3">
           <TooltipProvider>
@@ -183,26 +183,26 @@ export default function KpiCardBackendDriven({
           </div>
         </div>
 
-        {/* Row 2: Chart Area */}
-        <div className="min-h-0">
-          {isLoading ? (
-            <div className="h-full w-full flex items-center justify-center">
-              <Loader2 className="animate-spin mr-2 h-4 w-4" />
-              <span className="text-[12px] text-muted-foreground">Loading…</span>
-            </div>
-          ) : error ? (
-            <Alert variant="destructive" className="text-[12px]">
-              <AlertDescription>
-                Failed to load. Will retry in 5s.
-              </AlertDescription>
-            </Alert>
-          ) : (
-            body
-          )}
-        </div>
+        {/* Row 2: Combined Content (Chart + Footer) */}
+        <div className="flex flex-col h-full justify-between gap-3 min-h-0">
+          <div className="relative w-full" style={{ minHeight: 220 }}>
+            {isLoading ? (
+              <div className="h-full w-full flex items-center justify-center">
+                <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                <span className="text-[12px] text-muted-foreground">Loading…</span>
+              </div>
+            ) : error ? (
+              <Alert variant="destructive" className="text-[12px]">
+                <AlertDescription>
+                  Failed to load. Will retry in 5s.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              body
+            )}
+          </div>
 
-        {/* Row 3: Footer */}
-        <div className="space-y-2">
+          <div className="space-y-2">
           {action && (
             <>
               <div 
@@ -315,6 +315,7 @@ export default function KpiCardBackendDriven({
             {payload?.meta?.unit && (
               <span className="text-right">Unit: {payload.meta.unit}</span>
             )}
+          </div>
           </div>
         </div>
       </div>
