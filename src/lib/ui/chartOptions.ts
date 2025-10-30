@@ -26,7 +26,7 @@ export function makeLineOptions({
     grid: { 
       top: 24, 
       right: 16, 
-      bottom: 56, 
+      bottom: 36, 
       left: 56,
       containLabel: true
     },
@@ -99,7 +99,7 @@ export function makeBarOptions({
     grid: { 
       top: 24, 
       right: 16, 
-      bottom: 56, 
+      bottom: 36, 
       left: 56,
       containLabel: true
     },
@@ -258,7 +258,7 @@ export function makeHeatmapOptions({
     grid: { 
       top: 24, 
       right: 56, 
-      bottom: 56, 
+      bottom: 36, 
       left: 56,
       containLabel: true
     },
