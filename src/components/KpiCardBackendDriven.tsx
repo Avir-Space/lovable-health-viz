@@ -143,10 +143,10 @@ export default function KpiCardBackendDriven({
   }, [payload, variant, dashboard]);
 
   return (
-    <Card className="p-5 hover:shadow-md transition-all hover:scale-[1.01] h-[380px]">
-      <div className="grid grid-rows-[auto_1fr_auto] h-full gap-3">
+    <Card className="p-4 hover:shadow-md transition-all hover:scale-[1.01] h-[420px]">
+      <div className="grid grid-rows-[auto_1fr_auto] h-full gap-2">
         {/* Row 1: Header */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -206,7 +206,7 @@ export default function KpiCardBackendDriven({
           {action && (
             <>
               <div 
-                className="border-t pt-3 flex flex-wrap justify-between items-start gap-3"
+                className="border-t pt-2 flex flex-wrap justify-between items-start gap-3"
                 aria-label="AI Action"
               >
                 <div className="flex items-start gap-2 max-w-[70%] flex-1">
