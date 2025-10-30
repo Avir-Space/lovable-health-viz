@@ -32,15 +32,14 @@ export function LineChart({ data, unit = "", xLabel = "", yLabel = "" }: LineCha
   
   const option = {
     grid: { 
-      top: 28, 
-      right: 12, 
-      bottom: 42, 
-      left: 52,
+      top: 32, 
+      right: 24, 
+      bottom: 56, 
+      left: 64,
       containLabel: true
     },
     tooltip: { 
       trigger: 'axis',
-      confine: true,
       formatter: (params: any) => {
         let result = `${params[0].axisValue}<br/>`;
         params.forEach((item: any) => {
@@ -59,20 +58,10 @@ export function LineChart({ data, unit = "", xLabel = "", yLabel = "" }: LineCha
       axisLabel: { 
         rotate: 30, 
         fontSize: 11,
-        margin: 12,
-        hideOverlap: true
+        margin: 12
       } 
     },
-    yAxis: { 
-      type: 'value', 
-      name: yLabel, 
-      nameLocation: 'middle', 
-      nameGap: 50, 
-      axisLabel: { 
-        formatter: (v: number) => `${v}${unit}`,
-        hideOverlap: true
-      } 
-    },
+    yAxis: { type: 'value', name: yLabel, nameLocation: 'middle', nameGap: 50, axisLabel: { formatter: (v: number) => `${v}${unit}` } },
     series: seriesConfigs,
     media: [
       { 
