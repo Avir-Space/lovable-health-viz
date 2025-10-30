@@ -121,3 +121,11 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  @screen md {
+    .avir-two-col {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}

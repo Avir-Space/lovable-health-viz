@@ -33,7 +33,7 @@ export default function ComplianceAirworthiness() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2 gap-6 avir-two-col">
         {kpis.map((k) => (
           <KpiCardBackendDriven
             key={k.kpi_key}
