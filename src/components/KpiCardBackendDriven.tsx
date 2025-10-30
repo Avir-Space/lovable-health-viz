@@ -193,22 +193,19 @@ export default function KpiCardBackendDriven({
 
       {action && (
         <div 
-          className="mt-3 pt-3 border-t flex items-center justify-between gap-3"
+          className="mt-3 pt-3 border-t flex flex-wrap justify-between items-end gap-2"
           aria-label="AI Action"
         >
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span 
-              className="text-[12px] font-medium truncate" 
-              title={action.action_title}
-            >
+          <div className="flex items-start gap-2 max-w-[70%] flex-1">
+            <Sparkles className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+            <p className="text-[12px] font-medium whitespace-normal break-words leading-snug">
               {action.action_title}
-            </span>
+            </p>
           </div>
           <Button
             size="sm"
             onClick={handleActionClick}
-            className="h-7 px-3 text-[11px] shrink-0"
+            className="h-7 px-3 text-[11px] shrink-0 ml-auto"
             aria-label="AI Action CTA"
           >
             {action.action_cta_label}
