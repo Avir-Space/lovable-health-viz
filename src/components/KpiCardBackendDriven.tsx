@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import { KpiRange, KpiVariant, useKpiData } from '@/hooks/useKpiData';
+import { useKpiAction } from '@/hooks/useKpiAction';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { RangeChips } from './ui/range-chips';
@@ -26,6 +27,7 @@ export default function KpiCardBackendDriven({
   defaultRange = '1M',
   useLiveData = true,
   dashboard,
+  onKpiAction,
 }: {
   kpi_key: string;
   name: string;
@@ -34,6 +36,7 @@ export default function KpiCardBackendDriven({
   defaultRange?: KpiRange;
   useLiveData?: boolean;
   dashboard?: string;
+  onKpiAction?: (kpi_key: string) => void;
 }) {
   const [range, setRange] = useState<KpiRange>(defaultRange);
   const { toast } = useToast();
@@ -43,7 +46,16 @@ export default function KpiCardBackendDriven({
     range,
     useLiveData
   );
+  const { action } = useKpiAction(kpi_key);
   const showRanges = TIME_SERIES.includes(variant);
+
+  const handleActionClick = () => {
+    if (onKpiAction) {
+      onKpiAction(kpi_key);
+    } else {
+      console.info('[AVIR] AI Action clicked for KPI:', kpi_key);
+    }
+  };
 
   const handleSync = async () => {
     try {
@@ -178,6 +190,31 @@ export default function KpiCardBackendDriven({
           body
         )}
       </div>
+
+      {action && (
+        <div 
+          className="mt-3 pt-3 border-t flex items-center justify-between gap-3"
+          aria-label="AI Action"
+        >
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span 
+              className="text-[12px] font-medium truncate" 
+              title={action.action_title}
+            >
+              {action.action_title}
+            </span>
+          </div>
+          <Button
+            size="sm"
+            onClick={handleActionClick}
+            className="h-7 px-3 text-[11px] shrink-0"
+            aria-label="AI Action CTA"
+          >
+            {action.action_cta_label}
+          </Button>
+        </div>
+      )}
 
       <div className="mt-3 text-[11px] text-muted-foreground flex justify-between items-center">
         <span>
