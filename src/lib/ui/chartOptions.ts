@@ -23,7 +23,13 @@ export function makeLineOptions({
 }): EChartsOption {
   return {
     color: palette,
-    grid: { top: 24, right: 16, bottom: 54, left: 56 },
+    grid: { 
+      top: 24, 
+      right: 16, 
+      bottom: 56, 
+      left: 56,
+      containLabel: true
+    },
     tooltip: {
       trigger: 'axis',
       formatter: (params: any) => {
@@ -38,10 +44,11 @@ export function makeLineOptions({
       type: 'category',
       data: x,
       axisLabel: {
-        rotate: 28,
+        rotate: 30,
         fontSize: 11,
         color: '#71717a',
         hideOverlap: true,
+        margin: 12,
         formatter: (v: string) => (v?.length > 10 ? v.slice(0, 10) : v),
       },
     },
@@ -65,6 +72,14 @@ export function makeLineOptions({
       data: s.data,
       name: s.name,
     })),
+    media: [
+      { 
+        query: { maxWidth: 480 }, 
+        option: { 
+          grid: { bottom: 72 } 
+        } 
+      }
+    ]
   };
 }
 
@@ -81,7 +96,13 @@ export function makeBarOptions({
 }): EChartsOption {
   return {
     color: [palette[0] ?? '#3b82f6'],
-    grid: { top: 24, right: 16, bottom: 56, left: 56 },
+    grid: { 
+      top: 24, 
+      right: 16, 
+      bottom: 56, 
+      left: 56,
+      containLabel: true
+    },
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
@@ -92,10 +113,11 @@ export function makeBarOptions({
       type: 'category',
       data: x,
       axisLabel: {
-        rotate: 28,
+        rotate: 30,
         fontSize: 11,
         color: '#71717a',
         hideOverlap: true,
+        margin: 12,
       },
     },
     yAxis: {
@@ -115,6 +137,14 @@ export function makeBarOptions({
         itemStyle: { borderRadius: [4, 4, 0, 0] },
       },
     ],
+    media: [
+      { 
+        query: { maxWidth: 480 }, 
+        option: { 
+          grid: { bottom: 72 } 
+        } 
+      }
+    ]
   };
 }
 
@@ -225,13 +255,24 @@ export function makeHeatmapOptions({
   const max = vals.length ? Math.max(...vals) : 100;
 
   return {
-    grid: { top: 24, right: 56, bottom: 40, left: 56 },
+    grid: { 
+      top: 24, 
+      right: 56, 
+      bottom: 56, 
+      left: 56,
+      containLabel: true
+    },
     tooltip: { position: 'top' },
     xAxis: {
       type: 'category',
       data: xLabels,
       splitArea: { show: true },
-      axisLabel: { fontSize: 11, color: '#71717a' },
+      axisLabel: { 
+        fontSize: 11, 
+        color: '#71717a',
+        rotate: 30,
+        margin: 12
+      },
     },
     yAxis: {
       type: 'category',
@@ -254,5 +295,13 @@ export function makeHeatmapOptions({
         label: { show: true, fontSize: 10 },
       },
     ],
+    media: [
+      { 
+        query: { maxWidth: 480 }, 
+        option: { 
+          grid: { bottom: 72 } 
+        } 
+      }
+    ]
   };
 }

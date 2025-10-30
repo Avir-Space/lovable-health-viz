@@ -143,173 +143,180 @@ export default function KpiCardBackendDriven({
   }, [payload, variant, dashboard]);
 
   return (
-    <Card className="p-5 hover:shadow-md transition-all hover:scale-[1.01] h-[380px] flex flex-col">
-      <div className="space-y-3">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <h4 className="text-[15px] font-semibold leading-snug tracking-tight break-words">
-                {name}
-              </h4>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-[420px]">
-              <p>{name}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        
-        <div className="flex items-center gap-2 flex-wrap">
-          {showRanges && (
-            <RangeChips selected={range} onChange={setRange} />
-          )}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleSync}
-            disabled={isValidating}
-            className="h-7 px-2 text-[11px] gap-1.5 ml-auto"
-            aria-label="Sync now"
-            title="Sync now"
-          >
-            {isValidating ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <RefreshCw className="h-3.5 w-3.5" />
+    <Card className="p-5 hover:shadow-md transition-all hover:scale-[1.01] h-[380px]">
+      <div className="grid grid-rows-[auto_1fr_auto] h-full gap-3">
+        {/* Row 1: Header */}
+        <div className="space-y-3">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <h4 className="text-[15px] font-semibold leading-snug tracking-tight break-words">
+                  {name}
+                </h4>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[420px]">
+                <p>{name}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <div className="flex items-center gap-2 flex-wrap">
+            {showRanges && (
+              <RangeChips selected={range} onChange={setRange} />
             )}
-            Sync
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex-1 min-h-0 mt-4">
-        {isLoading ? (
-          <div className="h-full w-full flex items-center justify-center">
-            <Loader2 className="animate-spin mr-2 h-4 w-4" />
-            <span className="text-[12px] text-muted-foreground">Loading…</span>
-          </div>
-        ) : error ? (
-          <Alert variant="destructive" className="text-[12px]">
-            <AlertDescription>
-              Failed to load. Will retry in 5s.
-            </AlertDescription>
-          </Alert>
-        ) : (
-          body
-        )}
-      </div>
-
-      {action && (
-        <>
-          <div 
-            className="mt-3 pt-3 border-t flex flex-wrap justify-between items-end gap-2"
-            aria-label="AI Action"
-          >
-            <div className="flex items-start gap-2 max-w-[70%] flex-1">
-              <Sparkles className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-              <p className="text-[12px] font-medium whitespace-normal break-words leading-snug">
-                {action.action_title}
-              </p>
-            </div>
             <Button
               size="sm"
-              onClick={handleActionClick}
-              className="h-7 px-3 text-[11px] shrink-0 ml-auto"
-              aria-label="AI Action CTA"
+              variant="outline"
+              onClick={handleSync}
+              disabled={isValidating}
+              className="h-7 px-2 text-[11px] gap-1.5 ml-auto"
+              aria-label="Sync now"
+              title="Sync now"
             >
-              {action.action_cta_label}
+              {isValidating ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+              Sync
             </Button>
           </div>
+        </div>
 
-          <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-            <SheetContent className="w-full sm:max-w-[520px] overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle className="text-lg font-semibold pr-6">{name}</SheetTitle>
-              </SheetHeader>
-              
-              <div className="mt-6 space-y-6">
-                <div>
-                  <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    Action
-                  </h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+        {/* Row 2: Chart Area */}
+        <div className="min-h-0">
+          {isLoading ? (
+            <div className="h-full w-full flex items-center justify-center">
+              <Loader2 className="animate-spin mr-2 h-4 w-4" />
+              <span className="text-[12px] text-muted-foreground">Loading…</span>
+            </div>
+          ) : error ? (
+            <Alert variant="destructive" className="text-[12px]">
+              <AlertDescription>
+                Failed to load. Will retry in 5s.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            body
+          )}
+        </div>
+
+        {/* Row 3: Footer */}
+        <div className="space-y-2">
+          {action && (
+            <>
+              <div 
+                className="border-t pt-3 flex flex-wrap justify-between items-start gap-3"
+                aria-label="AI Action"
+              >
+                <div className="flex items-start gap-2 max-w-[70%] flex-1">
+                  <Sparkles className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                  <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2 font-medium leading-snug">
                     {action.action_title}
                   </p>
                 </div>
-
-                {action.why_this_action && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-foreground mb-2">
-                      Why this action
-                    </h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {action.why_this_action}
-                    </p>
-                  </div>
-                )}
-
-                {action.evidence_section && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-foreground mb-2">
-                      Evidence
-                    </h4>
-                    <div className="text-sm text-muted-foreground leading-relaxed space-y-1">
-                      {action.evidence_section.split(/[•\n]/).filter(Boolean).map((item, idx) => (
-                        <div key={idx} className="flex gap-2">
-                          <span className="text-primary">•</span>
-                          <span>{item.trim()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {action.impact_if_ignored && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-foreground mb-2">
-                      If ignored
-                    </h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {action.impact_if_ignored}
-                    </p>
-                  </div>
-                )}
-
-                {action.expected_gain && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-foreground mb-2">
-                      Expected gain
-                    </h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {action.expected_gain}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <SheetFooter className="mt-6 pt-4 border-t">
-                <Button 
-                  onClick={handleDrawerAction}
-                  className="w-full"
-                  size="lg"
+                <Button
+                  size="sm"
+                  onClick={handleActionClick}
+                  className="shrink-0"
+                  aria-label="AI Action CTA"
                 >
                   {action.action_cta_label}
                 </Button>
-              </SheetFooter>
-            </SheetContent>
-          </Sheet>
-        </>
-      )}
+              </div>
 
-      <div className="mt-3 text-[11px] text-muted-foreground flex justify-between items-center">
-        <span>
-          {payload?.generated_at
-            ? `Synced ${formatDistanceToNow(new Date(payload.generated_at), { addSuffix: true })}`
-            : 'Not synced'}
-        </span>
-        {payload?.meta?.unit && (
-          <span className="text-right">Unit: {payload.meta.unit}</span>
-        )}
+              <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+                <SheetContent className="w-full sm:max-w-[520px] overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle className="text-lg font-semibold pr-6">{name}</SheetTitle>
+                  </SheetHeader>
+                  
+                  <div className="mt-6 space-y-6">
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        Action
+                      </h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {action.action_title}
+                      </p>
+                    </div>
+
+                    {action.why_this_action && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-foreground mb-2">
+                          Why this action
+                        </h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {action.why_this_action}
+                        </p>
+                      </div>
+                    )}
+
+                    {action.evidence_section && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-foreground mb-2">
+                          Evidence
+                        </h4>
+                        <div className="text-sm text-muted-foreground leading-relaxed space-y-1">
+                          {action.evidence_section.split(/[•\n]/).filter(Boolean).map((item, idx) => (
+                            <div key={idx} className="flex gap-2">
+                              <span className="text-primary">•</span>
+                              <span>{item.trim()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {action.impact_if_ignored && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-foreground mb-2">
+                          If ignored
+                        </h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {action.impact_if_ignored}
+                        </p>
+                      </div>
+                    )}
+
+                    {action.expected_gain && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-foreground mb-2">
+                          Expected gain
+                        </h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {action.expected_gain}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <SheetFooter className="mt-6 pt-4 border-t">
+                    <Button 
+                      onClick={handleDrawerAction}
+                      className="w-full"
+                      size="lg"
+                    >
+                      {action.action_cta_label}
+                    </Button>
+                  </SheetFooter>
+                </SheetContent>
+              </Sheet>
+            </>
+          )}
+
+          <div className="text-[11px] text-muted-foreground flex justify-between items-center">
+            <span>
+              {payload?.generated_at
+                ? `Synced ${formatDistanceToNow(new Date(payload.generated_at), { addSuffix: true })}`
+                : 'Not synced'}
+            </span>
+            {payload?.meta?.unit && (
+              <span className="text-right">Unit: {payload.meta.unit}</span>
+            )}
+          </div>
+        </div>
       </div>
     </Card>
   );

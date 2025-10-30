@@ -31,7 +31,13 @@ export function LineChart({ data, unit = "", xLabel = "", yLabel = "" }: LineCha
   const formattedXAxis = xAxisData.map(formatXAxisDateLabel);
   
   const option = {
-    grid: { top: 32, right: 24, bottom: 58, left: 64 },
+    grid: { 
+      top: 32, 
+      right: 24, 
+      bottom: 56, 
+      left: 64,
+      containLabel: true
+    },
     tooltip: { 
       trigger: 'axis',
       formatter: (params: any) => {
@@ -43,9 +49,28 @@ export function LineChart({ data, unit = "", xLabel = "", yLabel = "" }: LineCha
       }
     },
     legend: seriesConfigs.length > 1 ? { bottom: 0 } : undefined,
-    xAxis: { type: 'category', name: xLabel, nameLocation: 'middle', nameGap: 30, data: formattedXAxis, axisLabel: { rotate: 18, fontSize: 11 } },
+    xAxis: { 
+      type: 'category', 
+      name: xLabel, 
+      nameLocation: 'middle', 
+      nameGap: 30, 
+      data: formattedXAxis, 
+      axisLabel: { 
+        rotate: 30, 
+        fontSize: 11,
+        margin: 12
+      } 
+    },
     yAxis: { type: 'value', name: yLabel, nameLocation: 'middle', nameGap: 50, axisLabel: { formatter: (v: number) => `${v}${unit}` } },
-    series: seriesConfigs
+    series: seriesConfigs,
+    media: [
+      { 
+        query: { maxWidth: 480 }, 
+        option: { 
+          grid: { bottom: 72 } 
+        } 
+      }
+    ]
   };
 
   return <ReactECharts option={option} style={{ height: 300, width: "100%" }} />;
