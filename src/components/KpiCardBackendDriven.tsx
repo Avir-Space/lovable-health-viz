@@ -17,6 +17,7 @@ import GaugeChart from './charts/GaugeChart';
 import Heatmap from './charts/HeatmapChart';
 import NumericChart from './charts/NumericChart';
 import TableGrid from './TableGrid';
+import { KpiSourcePills } from './KpiSourcePills';
 
 const TIME_SERIES: KpiVariant[] = ['line', 'numeric', 'gauge'];
 
@@ -159,6 +160,8 @@ export default function KpiCardBackendDriven({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
+          <KpiSourcePills kpiKey={kpi_key} />
           
           <div className="flex items-center gap-2 flex-wrap">
             {showRanges && (
