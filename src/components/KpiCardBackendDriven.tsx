@@ -293,6 +293,13 @@ export default function KpiCardBackendDriven({
                         </p>
                       </div>
                     )}
+
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground mb-2">
+                        Product Sources
+                      </h4>
+                      <KpiSourcePills kpiKey={kpi_key} />
+                    </div>
                   </div>
 
                   <SheetFooter className="mt-4 pt-3 border-t">

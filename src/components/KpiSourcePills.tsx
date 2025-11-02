@@ -24,23 +24,33 @@ export function KpiSourcePills({ kpiKey }: KpiSourcePillsProps) {
 
       try {
         const { data, error } = await supabase
-          .from('kpi_product_sources' as any)
-          .select('kpi_key, product_source, sources')
-          .eq('kpi_key', kpiKey);
+          .from('kpi_meta')
+          .select('config')
+          .eq('kpi_key', kpiKey)
+          .maybeSingle();
 
         if (error) throw error;
+        if (!data?.config) {
+          cache.set(kpiKey, []);
+          if (mounted) setSources([]);
+          return;
+        }
 
-        // Normalize: flatten sources array or use product_source as fallback
-        const flat = (data || []).flatMap((r: any) => {
-          if (r.sources && Array.isArray(r.sources) && r.sources.length > 0) {
-            return r.sources;
-          }
-          return r.product_source ? [r.product_source] : [];
-        });
+        const config = data.config as any;
+        let sourcesList: string[] = [];
+
+        // Try to get sources array first
+        if (config.sources && Array.isArray(config.sources)) {
+          sourcesList = config.sources;
+        } 
+        // Fallback to product_source
+        else if (config.product_source && typeof config.product_source === 'string') {
+          sourcesList = [config.product_source];
+        }
 
         // De-duplicate and trim
         const uniq = Array.from(
-          new Set(flat.map((s: string) => s.trim()).filter(Boolean))
+          new Set(sourcesList.map((s: string) => s.trim()).filter(Boolean))
         );
 
         cache.set(kpiKey, uniq);
