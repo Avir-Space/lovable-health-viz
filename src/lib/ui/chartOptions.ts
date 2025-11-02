@@ -24,10 +24,10 @@ export function makeLineOptions({
   return {
     color: palette,
     grid: { 
-      top: 24, 
-      right: 16, 
-      bottom: 36, 
-      left: 56,
+      top: 40, 
+      right: 24, 
+      bottom: 50, 
+      left: 64,
       containLabel: true
     },
     tooltip: {
@@ -97,10 +97,10 @@ export function makeBarOptions({
   return {
     color: [palette[0] ?? '#3b82f6'],
     grid: { 
-      top: 24, 
-      right: 16, 
-      bottom: 36, 
-      left: 56,
+      top: 40, 
+      right: 24, 
+      bottom: 50, 
+      left: 64,
       containLabel: true
     },
     tooltip: {
@@ -256,10 +256,10 @@ export function makeHeatmapOptions({
 
   return {
     grid: { 
-      top: 24, 
-      right: 56, 
-      bottom: 36, 
-      left: 56,
+      top: 40, 
+      right: 64, 
+      bottom: 50, 
+      left: 64,
       containLabel: true
     },
     tooltip: { position: 'top' },

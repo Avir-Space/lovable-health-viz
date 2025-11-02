@@ -227,11 +227,11 @@ export default function KpiCardBackendDriven({
 
               <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
                 <SheetContent className="w-full sm:max-w-[520px] overflow-y-auto">
-                  <SheetHeader>
+                  <SheetHeader className="pb-3">
                     <SheetTitle className="text-lg font-semibold pr-6">{name}</SheetTitle>
                   </SheetHeader>
                   
-                  <div className="mt-6 space-y-6">
+                  <div className="mt-3 space-y-3">
                     <div>
                       <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
                         <Sparkles className="h-4 w-4 text-primary" />
@@ -292,7 +292,7 @@ export default function KpiCardBackendDriven({
                     )}
                   </div>
 
-                  <SheetFooter className="mt-6 pt-4 border-t">
+                  <SheetFooter className="mt-4 pt-3 border-t">
                     <Button 
                       onClick={handleDrawerAction}
                       className="w-full"
