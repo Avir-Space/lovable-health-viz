@@ -1,56 +1,72 @@
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { KPICard } from "@/components/dashboard/KPICard";
-import { LineChart } from "@/components/dashboard/charts/LineChart";
-import { BarChart } from "@/components/dashboard/charts/BarChart";
-import { impactKPIs } from "@/data/impactKPIs";
+import { ImpactKpiCard } from '@/components/impact/ImpactKpiCard';
+import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
+
+type ImpactContext = 'my' | 'overall';
+
+interface KpiRegistry {
+  kpi_key: string;
+  name: string;
+  unit?: string;
+  product_sources?: string[];
+  action_title?: string;
+  action_cta_label?: string;
+}
 
 export default function Impact() {
-  const renderChart = (kpi: any) => {
-    const { variant, data, xAxis, yAxis } = kpi;
+  const [activeTab, setActiveTab] = useState<ImpactContext>('my');
+  const [kpis, setKpis] = useState<KpiRegistry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
-    // Transform old data format to new format
-    const transformedData = data?.map((item: any) => ({
-      bucket: item.month || item.date || '',
-      value: item.reduction || item.value || 0,
-      category: item.category || ''
-    })) || [];
+  useEffect(() => {
+    // Get current user
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id || null);
+    });
+  }, []);
 
-    switch (variant) {
-      case "line":
-        return (
-          <LineChart
-            data={transformedData}
-            unit=""
-            xLabel={xAxis}
-            yLabel={yAxis}
-          />
-        );
-      case "bar":
-        return (
-          <BarChart
-            data={transformedData}
-            unit=""
-            xLabel={xAxis}
-            yLabel={yAxis}
-          />
-        );
-      default:
-        return <div className="h-64 flex items-center justify-center text-muted-foreground">Chart not available</div>;
+  useEffect(() => {
+    fetchKpis();
+  }, [activeTab, userId]);
+
+  const fetchKpis = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('v_impact_card_registry' as any)
+        .select('kpi_key, name, unit, product_sources, action_title, action_cta_label')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+
+      // Filter KPIs that have timeseries data for the active context
+      const kpisWithData = await Promise.all(
+        (data || []).map(async (kpi: any) => {
+          const query = supabase
+            .from('impact_timeseries' as any)
+            .select('id', { count: 'exact', head: true })
+            .eq('kpi_key', kpi.kpi_key)
+            .eq('context', activeTab)
+            .limit(1);
+
+          if (activeTab === 'my' && userId) {
+            query.eq('user_id', userId);
+          }
+
+          const { count } = await query;
+          return count && count > 0 ? kpi : null;
+        })
+      );
+
+      setKpis(kpisWithData.filter(Boolean) as KpiRegistry[]);
+    } catch (error: any) {
+      console.error('[Impact] Error fetching KPIs:', error);
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const renderKPICards = () => {
-    return impactKPIs.map((kpi) => (
-      <KPICard
-        key={kpi.key}
-        title={kpi.name}
-        sources={kpi.sources}
-        aiSuggestion={kpi.aiInsight}
-        aiAction={kpi.aiAction}
-      >
-        {renderChart(kpi)}
-      </KPICard>
-    ));
   };
 
   return (
@@ -62,22 +78,39 @@ export default function Impact() {
         </p>
       </div>
 
-      <Tabs defaultValue="my-impact" className="w-full">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ImpactContext)} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="my-impact">My Impact</TabsTrigger>
-          <TabsTrigger value="overall-impact">Overall Impact</TabsTrigger>
+          <TabsTrigger value="my">My Impact</TabsTrigger>
+          <TabsTrigger value="overall">Overall Impact</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="my-impact" className="space-y-6 mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2 gap-6 avir-two-col">
-            {renderKPICards()}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="overall-impact" className="space-y-6 mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2 gap-6 avir-two-col">
-            {renderKPICards()}
-          </div>
+        <TabsContent value={activeTab} className="space-y-6 mt-6">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="animate-spin mr-2 h-8 w-8" />
+              <span className="text-muted-foreground">Loading impact data...</span>
+            </div>
+          ) : kpis.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              No impact data available for this view
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {kpis.map((kpi) => (
+                <ImpactKpiCard
+                  key={kpi.kpi_key}
+                  kpi_key={kpi.kpi_key}
+                  name={kpi.name}
+                  unit={kpi.unit}
+                  product_sources={kpi.product_sources}
+                  action_title={kpi.action_title}
+                  action_cta_label={kpi.action_cta_label}
+                  context={activeTab}
+                  userId={activeTab === 'my' ? userId : null}
+                />
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
