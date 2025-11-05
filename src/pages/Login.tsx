@@ -97,11 +97,13 @@ export default function Login() {
               required
               autoFocus
               autoComplete="email"
+              aria-label="Email address for sign in"
+              aria-describedby={error ? "email-error" : undefined}
             />
           </div>
 
           {error && (
-            <p className="text-sm text-destructive" role="alert">
+            <p id="email-error" className="text-sm text-destructive" role="alert">
               {error}
             </p>
           )}
@@ -110,10 +112,11 @@ export default function Login() {
             type="submit"
             className="w-full"
             disabled={loading || !email}
+            aria-label="Send sign-in link to email"
           >
             {loading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                 Sending...
               </>
             ) : (
