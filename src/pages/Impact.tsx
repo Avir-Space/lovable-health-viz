@@ -6,62 +6,100 @@ import { Loader2 } from 'lucide-react';
 
 type ImpactContext = 'my' | 'overall';
 
-interface KpiRegistry {
+interface ImpactKpiData {
   kpi_key: string;
   name: string;
-  unit?: string;
-  product_sources?: string[];
-  action_title?: string;
-  action_cta_label?: string;
+  variant: string;
+  dashboard: string;
+  config: any;
+  impact_value?: number;
+  impact_unit?: string;
+  impact_summary?: string;
+  period?: string;
 }
 
 export default function Impact() {
   const [activeTab, setActiveTab] = useState<ImpactContext>('my');
-  const [kpis, setKpis] = useState<KpiRegistry[]>([]);
+  const [kpis, setKpis] = useState<ImpactKpiData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get current user
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data.user?.id || null);
     });
   }, []);
 
   useEffect(() => {
+    if (activeTab === 'my' && !userId) return;
     fetchKpis();
   }, [activeTab, userId]);
 
   const fetchKpis = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('v_impact_card_registry' as any)
-        .select('kpi_key, name, unit, product_sources, action_title, action_cta_label')
-        .order('name', { ascending: true });
+      let query;
+      
+      if (activeTab === 'my') {
+        const { data, error } = await supabase
+          .from('impact_summaries_user' as any)
+          .select(`
+            kpi_key,
+            impact_value,
+            impact_unit,
+            impact_summary,
+            period,
+            kpi_meta!inner(name, variant, dashboard, config)
+          `)
+          .eq('user_id', userId)
+          .order('kpi_meta(dashboard)', { ascending: true })
+          .order('kpi_meta(name)', { ascending: true });
 
-      if (error) throw error;
+        if (error) throw error;
+        
+        const formattedData = (data || []).map((row: any) => ({
+          kpi_key: row.kpi_key,
+          name: row.kpi_meta.name,
+          variant: row.kpi_meta.variant,
+          dashboard: row.kpi_meta.dashboard,
+          config: row.kpi_meta.config,
+          impact_value: row.impact_value,
+          impact_unit: row.impact_unit,
+          impact_summary: row.impact_summary,
+          period: row.period,
+        }));
+        
+        setKpis(formattedData);
+      } else {
+        const { data, error } = await supabase
+          .from('impact_summaries_overall' as any)
+          .select(`
+            kpi_key,
+            impact_value,
+            impact_unit,
+            impact_summary,
+            period,
+            kpi_meta!inner(name, variant, dashboard, config)
+          `)
+          .order('kpi_meta(dashboard)', { ascending: true })
+          .order('kpi_meta(name)', { ascending: true });
 
-      // Filter KPIs that have timeseries data for the active context
-      const kpisWithData = await Promise.all(
-        (data || []).map(async (kpi: any) => {
-          const query = supabase
-            .from('impact_timeseries' as any)
-            .select('id', { count: 'exact', head: true })
-            .eq('kpi_key', kpi.kpi_key)
-            .eq('context', activeTab)
-            .limit(1);
-
-          if (activeTab === 'my' && userId) {
-            query.eq('user_id', userId);
-          }
-
-          const { count } = await query;
-          return count && count > 0 ? kpi : null;
-        })
-      );
-
-      setKpis(kpisWithData.filter(Boolean) as KpiRegistry[]);
+        if (error) throw error;
+        
+        const formattedData = (data || []).map((row: any) => ({
+          kpi_key: row.kpi_key,
+          name: row.kpi_meta.name,
+          variant: row.kpi_meta.variant,
+          dashboard: row.kpi_meta.dashboard,
+          config: row.kpi_meta.config,
+          impact_value: row.impact_value,
+          impact_unit: row.impact_unit,
+          impact_summary: row.impact_summary,
+          period: row.period,
+        }));
+        
+        setKpis(formattedData);
+      }
     } catch (error: any) {
       console.error('[Impact] Error fetching KPIs:', error);
     } finally {
@@ -101,10 +139,13 @@ export default function Impact() {
                   key={kpi.kpi_key}
                   kpi_key={kpi.kpi_key}
                   name={kpi.name}
-                  unit={kpi.unit}
-                  product_sources={kpi.product_sources}
-                  action_title={kpi.action_title}
-                  action_cta_label={kpi.action_cta_label}
+                  variant={kpi.variant}
+                  dashboard={kpi.dashboard}
+                  config={kpi.config}
+                  impact_value={kpi.impact_value}
+                  impact_unit={kpi.impact_unit}
+                  impact_summary={kpi.impact_summary}
+                  period={kpi.period}
                   context={activeTab}
                   userId={activeTab === 'my' ? userId : null}
                 />
