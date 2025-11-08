@@ -43,18 +43,22 @@ export default function Impact() {
   const fetchKpis = async () => {
     setIsLoading(true);
     try {
-      // 1. Get all impact-enabled KPIs from the registry view (source of truth for cards)
+      // 1. Get all impact-enabled KPIs from impact_kpi_registry (source of truth)
       const { data: cardRegistry, error: registryError } = await supabase
-        .from('v_impact_card_registry' as any)
+        .from('impact_kpi_registry' as any)
         .select('*')
         .order('dashboard', { ascending: true })
         .order('name', { ascending: true });
 
-      if (registryError) throw registryError;
+      if (registryError) {
+        console.error('[Impact] Error loading registry:', registryError);
+        setKpis([]);
+        return;
+      }
 
       // If registry is empty, that's a real configuration issue
       if (!cardRegistry || cardRegistry.length === 0) {
-        console.warn('[Impact] No cards in v_impact_card_registry');
+        console.warn('[Impact] No cards in impact_kpi_registry');
         setKpis([]);
         return;
       }
@@ -115,14 +119,14 @@ export default function Impact() {
         return {
           kpi_key: card.kpi_key,
           name: card.name,
-          variant: card.chart_variant,
+          variant: card.chart_variant || card.variant || 'line',
           dashboard: card.dashboard,
           config: { sources, product_source: card.primary_source },
           product_sources: sources,
           impact_value: summary?.impact_value,
           impact_unit: summary?.impact_unit,
           impact_summary: summary?.impact_summary,
-          period: summary?.period,
+          period: summary?.period || card.default_period || '30d',
         };
       });
 
@@ -157,7 +161,7 @@ export default function Impact() {
             </div>
           ) : kpis.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              No impact cards configured in the registry
+              Error loading impact registry or no cards configured
             </div>
           ) : (
             <>
