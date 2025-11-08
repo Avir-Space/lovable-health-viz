@@ -26,7 +26,8 @@ export default function Impact() {
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [totalCount, setTotalCount] = useState(0);
+  const PAGE_SIZE = 10;
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -37,49 +38,43 @@ export default function Impact() {
   useEffect(() => {
     if (activeTab === 'my' && !userId) return;
     fetchKpis();
-    setCurrentPage(1); // Reset to page 1 when switching tabs
-  }, [activeTab, userId]);
+  }, [activeTab, userId, currentPage]);
+
+  // Reset to page 1 when switching tabs
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
 
   const fetchKpis = async () => {
     setIsLoading(true);
     try {
-      // 1. Get all impact-enabled KPIs from impact_kpi_registry (source of truth)
-      const { data: cardRegistry, error: registryError } = await supabase
+      const offset = (currentPage - 1) * PAGE_SIZE;
+
+      // 1. Get paginated KPIs from impact_kpi_registry with count
+      const { data: cardRegistry, error: registryError, count } = await supabase
         .from('impact_kpi_registry' as any)
-        .select('*')
+        .select('kpi_key, dashboard, name, chart_variant, unit, time_variants, primary_source, product_sources, config', { count: 'exact' })
         .order('dashboard', { ascending: true })
-        .order('name', { ascending: true });
+        .order('name', { ascending: true })
+        .range(offset, offset + PAGE_SIZE - 1);
 
       if (registryError) {
         console.error('[Impact] Error loading registry:', registryError);
         setKpis([]);
+        setTotalCount(0);
         return;
       }
 
-      // If registry is empty, that's a real configuration issue
       if (!cardRegistry || cardRegistry.length === 0) {
         console.warn('[Impact] No cards in impact_kpi_registry');
         setKpis([]);
+        setTotalCount(0);
         return;
       }
 
-      // 2. Get product sources for all KPIs
-      const { data: sourcesData, error: sourcesError } = await supabase
-        .from('v_kpi_product_sources' as any)
-        .select('*');
+      setTotalCount(count || 0);
 
-      if (sourcesError) console.warn('[Impact] Error fetching product sources:', sourcesError);
-
-      // Build a map: kpi_key -> array of product sources
-      const sourcesMap = new Map<string, string[]>();
-      sourcesData?.forEach((row: any) => {
-        if (!sourcesMap.has(row.kpi_key)) {
-          sourcesMap.set(row.kpi_key, []);
-        }
-        sourcesMap.get(row.kpi_key)!.push(row.source);
-      });
-
-      // 3. Get impact summaries based on active tab (these are optional - cards render without them)
+      // 2. Get impact summaries based on active tab
       let summariesMap = new Map<string, any>();
       
       if (activeTab === 'my') {
@@ -91,7 +86,6 @@ export default function Impact() {
         if (summariesError) {
           console.warn('[Impact] Error fetching user summaries:', summariesError);
         } else {
-          console.log('[Impact] My Impact user:', userId, 'summaries:', summaries);
           summaries?.forEach((s: any) => {
             summariesMap.set(s.kpi_key, s);
           });
@@ -104,29 +98,28 @@ export default function Impact() {
         if (summariesError) {
           console.warn('[Impact] Error fetching overall summaries:', summariesError);
         } else {
-          console.log('[Impact] Overall Impact summaries:', summaries);
           summaries?.forEach((s: any) => {
             summariesMap.set(s.kpi_key, s);
           });
         }
       }
 
-      // 4. Always render all cards from registry, merging in summaries where available
+      // 3. Map registry cards with their impact summaries
       const formattedData = cardRegistry.map((card: any) => {
         const summary = summariesMap.get(card.kpi_key);
-        const sources = sourcesMap.get(card.kpi_key) || [];
+        const sources = card.product_sources || [];
         
         return {
           kpi_key: card.kpi_key,
           name: card.name,
-          variant: card.chart_variant || card.variant || 'line',
+          variant: card.chart_variant || 'line',
           dashboard: card.dashboard,
-          config: { sources, product_source: card.primary_source },
+          config: card.config || {},
           product_sources: sources,
           impact_value: summary?.impact_value,
           impact_unit: summary?.impact_unit,
           impact_summary: summary?.impact_summary,
-          period: summary?.period || card.default_period || '30d',
+          period: summary?.period || '1M',
         };
       });
 
@@ -166,7 +159,7 @@ export default function Impact() {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {kpis.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((kpi) => (
+                {kpis.map((kpi) => (
                   <ImpactKpiCard
                     key={kpi.kpi_key}
                     kpi_key={kpi.kpi_key}
@@ -185,7 +178,7 @@ export default function Impact() {
                 ))}
               </div>
               
-              {kpis.length > itemsPerPage && (
+              {totalCount > PAGE_SIZE && (
                 <div className="flex items-center justify-center gap-2 pt-4">
                   <Button
                     variant="outline"
@@ -196,13 +189,13 @@ export default function Impact() {
                     Previous
                   </Button>
                   <span className="text-sm text-muted-foreground px-4">
-                    Page {currentPage} of {Math.ceil(kpis.length / itemsPerPage)}
+                    Page {currentPage} of {Math.ceil(totalCount / PAGE_SIZE)}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(kpis.length / itemsPerPage), p + 1))}
-                    disabled={currentPage === Math.ceil(kpis.length / itemsPerPage)}
+                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalCount / PAGE_SIZE), p + 1))}
+                    disabled={currentPage === Math.ceil(totalCount / PAGE_SIZE)}
                   >
                     Next
                   </Button>
