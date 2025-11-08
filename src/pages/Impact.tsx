@@ -17,6 +17,7 @@ interface ImpactKpiData {
   config: any;
   product_sources: string[];
   impact_value?: number | string;
+  summary_text?: string;
 }
 
 export default function Impact() {
@@ -61,83 +62,41 @@ export default function Impact() {
         }
         setUserId(user.id);
 
-        // Query impact_summaries_user with nested kpi_meta
-        const { data: myData, error: myError, count } = await supabase
-          .from('impact_summaries_user' as any)
-          .select(`
-            kpi_key,
-            user_impact_value,
-            kpi_meta!inner(
-              name,
-              dashboard,
-              chart_variant,
-              unit,
-              product_sources,
-              time_variants,
-              config
-            )
-          `, { count: 'exact' })
-          .eq('user_id', user.id)
-          .order('kpi_key', { ascending: true })
-          .range(offset, offset + PAGE_SIZE - 1);
-
-        if (myError) {
-          console.error('[Impact] Error loading My Impact:', myError);
-          setKpis([]);
-          setTotalCount(0);
-          return;
-        }
-
-        setTotalCount(count || 0);
-
-        const formattedData = (myData || []).map((item: any) => {
-          const meta = Array.isArray(item.kpi_meta) ? item.kpi_meta[0] : item.kpi_meta;
-          return {
-            kpi_key: item.kpi_key,
-            name: meta?.name || 'Unknown KPI',
-            variant: meta?.chart_variant || 'line',
-            dashboard: meta?.dashboard || '',
-            unit: meta?.unit,
-            time_variants: meta?.time_variants || ['1D', '1W', '2W', '1M', '6M', '1Y'],
-            config: meta?.config || {},
-            product_sources: meta?.product_sources || [],
-            impact_value: item.user_impact_value,
-          };
-        });
-
-        setKpis(formattedData);
-      } else {
-        // Overall Impact - query kpi_meta with left join to impact_summaries_overall
-        const { data: overallData, error: overallError, count } = await supabase
-          .from('kpi_meta')
-          .select(`
-            kpi_key,
-            name,
-            dashboard,
-            chart_variant,
-            unit,
-            product_sources,
-            time_variants,
-            config,
-            impact_summaries_overall(overall_impact_value)
-          `, { count: 'exact' })
+        // Fetch registry from impact_kpi_registry
+        const { data: registry, error: registryError, count } = await supabase
+          .from('impact_kpi_registry' as any)
+          .select('kpi_key, dashboard, name, chart_variant, unit, product_sources, time_variants, config', { count: 'exact' })
           .order('name', { ascending: true })
           .range(offset, offset + PAGE_SIZE - 1);
 
-        if (overallError) {
-          console.error('[Impact] Error loading Overall Impact:', overallError);
+        if (registryError) {
+          console.error('[Impact] Error loading registry:', registryError);
           setKpis([]);
           setTotalCount(0);
+          setIsLoading(false);
           return;
         }
 
         setTotalCount(count || 0);
 
-        const formattedData = (overallData || []).map((item: any) => {
-          const impactData = Array.isArray(item.impact_summaries_overall) 
-            ? item.impact_summaries_overall[0] 
-            : item.impact_summaries_overall;
-          
+        // Fetch user impact summaries for all KPIs (not paginated)
+        const { data: userSummaries, error: summariesError } = await supabase
+          .from('impact_summaries_user' as any)
+          .select('kpi_key, impact_value, summary_text')
+          .eq('user_id', user.id);
+
+        if (summariesError) {
+          console.error('[Impact] Error loading user summaries:', summariesError);
+        }
+
+        // Create map for quick lookup
+        const summariesMap = new Map(
+          (userSummaries as any[] || []).map((s: any) => [s.kpi_key, s])
+        );
+
+        // Merge registry with summaries
+        const formattedData = (registry || []).map((item: any) => {
+          const summary = summariesMap.get(item.kpi_key);
           return {
             kpi_key: item.kpi_key,
             name: item.name,
@@ -147,7 +106,58 @@ export default function Impact() {
             time_variants: item.time_variants || ['1D', '1W', '2W', '1M', '6M', '1Y'],
             config: item.config || {},
             product_sources: item.product_sources || [],
-            impact_value: impactData?.overall_impact_value,
+            impact_value: summary?.impact_value,
+            summary_text: summary?.summary_text,
+          };
+        });
+
+        setKpis(formattedData);
+      } else {
+        // Overall Impact - use impact_kpi_registry as base
+        const { data: registry, error: registryError, count } = await supabase
+          .from('impact_kpi_registry' as any)
+          .select('kpi_key, dashboard, name, chart_variant, unit, product_sources, time_variants, config', { count: 'exact' })
+          .order('name', { ascending: true })
+          .range(offset, offset + PAGE_SIZE - 1);
+
+        if (registryError) {
+          console.error('[Impact] Error loading registry:', registryError);
+          setKpis([]);
+          setTotalCount(0);
+          setIsLoading(false);
+          return;
+        }
+
+        setTotalCount(count || 0);
+
+        // Fetch overall impact summaries for all KPIs (not paginated)
+        const { data: overallSummaries, error: summariesError } = await supabase
+          .from('impact_summaries_overall' as any)
+          .select('kpi_key, impact_value, summary_text');
+
+        if (summariesError) {
+          console.error('[Impact] Error loading overall summaries:', summariesError);
+        }
+
+        // Create map for quick lookup
+        const summariesMap = new Map(
+          (overallSummaries as any[] || []).map((s: any) => [s.kpi_key, s])
+        );
+
+        // Merge registry with summaries
+        const formattedData = (registry || []).map((item: any) => {
+          const summary = summariesMap.get(item.kpi_key);
+          return {
+            kpi_key: item.kpi_key,
+            name: item.name,
+            variant: item.chart_variant || 'line',
+            dashboard: item.dashboard,
+            unit: item.unit,
+            time_variants: item.time_variants || ['1D', '1W', '2W', '1M', '6M', '1Y'],
+            config: item.config || {},
+            product_sources: item.product_sources || [],
+            impact_value: summary?.impact_value,
+            summary_text: summary?.summary_text,
           };
         });
 
@@ -209,6 +219,7 @@ export default function Impact() {
                     config={kpi.config}
                     product_sources={kpi.product_sources}
                     impact_value={typeof kpi.impact_value === 'string' ? parseFloat(kpi.impact_value) : kpi.impact_value}
+                    summary_text={kpi.summary_text}
                     context={activeTab}
                     userId={activeTab === 'my' ? userId : null}
                   />

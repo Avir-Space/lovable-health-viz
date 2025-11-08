@@ -20,9 +20,10 @@ interface ImpactKpiCardProps {
   dashboard: string;
   unit?: string;
   time_variants?: string[];
-  config: any;
+  config?: any;
   product_sources?: string[];
   impact_value?: number;
+  summary_text?: string;
   context: ImpactContext;
   userId?: string | null;
 }
@@ -37,6 +38,7 @@ export function ImpactKpiCard({
   config,
   product_sources = [],
   impact_value,
+  summary_text,
   context,
   userId,
 }: ImpactKpiCardProps) {
