@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ImpactKpiCard } from '@/components/impact/ImpactKpiCard';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 type ImpactContext = 'my' | 'overall';
 
@@ -21,29 +22,22 @@ interface ImpactKpiData {
 }
 
 export default function Impact() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<ImpactContext>('my');
   const [kpis, setKpis] = useState<ImpactKpiData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const PAGE_SIZE = 10;
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserId(data.user?.id || null);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === 'my' && !userId) return;
-    fetchKpis();
-  }, [activeTab, userId, currentPage]);
 
   // Reset to page 1 when switching tabs
   useEffect(() => {
     setCurrentPage(1);
   }, [activeTab]);
+
+  useEffect(() => {
+    fetchKpis();
+  }, [activeTab, currentPage, user]);
 
   const fetchKpis = async () => {
     setIsLoading(true);
@@ -51,8 +45,6 @@ export default function Impact() {
       const offset = (currentPage - 1) * PAGE_SIZE;
 
       if (activeTab === 'my') {
-        // Check auth first
-        const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           console.warn('[Impact] No authenticated user for My Impact');
           setKpis([]);
@@ -60,7 +52,6 @@ export default function Impact() {
           setIsLoading(false);
           return;
         }
-        setUserId(user.id);
 
         // Fetch registry from impact_kpi_registry
         const { data: registry, error: registryError, count } = await supabase
@@ -193,7 +184,7 @@ export default function Impact() {
               <Loader2 className="animate-spin mr-2 h-8 w-8" />
               <span className="text-muted-foreground">Loading impact data...</span>
             </div>
-          ) : activeTab === 'my' && !userId ? (
+          ) : activeTab === 'my' && !user ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">Sign in to see your personalized impact</p>
               <Button onClick={() => window.location.href = '/login'}>Sign In</Button>
@@ -221,7 +212,7 @@ export default function Impact() {
                     impact_value={typeof kpi.impact_value === 'string' ? parseFloat(kpi.impact_value) : kpi.impact_value}
                     summary_text={kpi.summary_text}
                     context={activeTab}
-                    userId={activeTab === 'my' ? userId : null}
+                    userId={activeTab === 'my' ? user?.id : null}
                   />
                 ))}
               </div>
