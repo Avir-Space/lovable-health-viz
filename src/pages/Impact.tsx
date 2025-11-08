@@ -16,7 +16,7 @@ interface ImpactKpiData {
   time_variants?: string[];
   config: any;
   product_sources: string[];
-  impact_value?: number;
+  impact_value?: number | string;
 }
 
 export default function Impact() {
@@ -49,81 +49,114 @@ export default function Impact() {
     try {
       const offset = (currentPage - 1) * PAGE_SIZE;
 
-      // 1. Get paginated KPIs from impact_kpi_registry with count
-      const { data: cardRegistry, error: registryError, count } = await supabase
-        .from('impact_kpi_registry' as any)
-        .select('kpi_key, dashboard, name, chart_variant, unit, time_variants, primary_source, product_sources, config', { count: 'exact' })
-        .order('dashboard', { ascending: true })
-        .order('name', { ascending: true })
-        .range(offset, offset + PAGE_SIZE - 1);
-
-      if (registryError) {
-        console.error('[Impact] Error loading registry:', registryError);
-        setKpis([]);
-        setTotalCount(0);
-        return;
-      }
-
-      if (!cardRegistry || cardRegistry.length === 0) {
-        console.warn('[Impact] No cards in impact_kpi_registry');
-        setKpis([]);
-        setTotalCount(0);
-        return;
-      }
-
-      setTotalCount(count || 0);
-
-      // 2. Get impact summaries based on active tab
-      let summariesMap = new Map<string, number>();
-      
       if (activeTab === 'my') {
-        const { data: summaries, error: summariesError } = await supabase
+        // Check auth first
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.warn('[Impact] No authenticated user for My Impact');
+          setKpis([]);
+          setTotalCount(0);
+          setIsLoading(false);
+          return;
+        }
+        setUserId(user.id);
+
+        // Query impact_summaries_user with nested kpi_meta
+        const { data: myData, error: myError, count } = await supabase
           .from('impact_summaries_user' as any)
-          .select('kpi_key, impact_value')
-          .eq('user_id', userId);
+          .select(`
+            kpi_key,
+            user_impact_value,
+            kpi_meta!inner(
+              name,
+              dashboard,
+              chart_variant,
+              unit,
+              product_sources,
+              time_variants,
+              config
+            )
+          `, { count: 'exact' })
+          .eq('user_id', user.id)
+          .order('kpi_key', { ascending: true })
+          .range(offset, offset + PAGE_SIZE - 1);
 
-        if (summariesError) {
-          console.warn('[Impact] Error fetching user summaries:', summariesError);
-        } else {
-          summaries?.forEach((s: any) => {
-            summariesMap.set(s.kpi_key, s.impact_value);
-          });
+        if (myError) {
+          console.error('[Impact] Error loading My Impact:', myError);
+          setKpis([]);
+          setTotalCount(0);
+          return;
         }
+
+        setTotalCount(count || 0);
+
+        const formattedData = (myData || []).map((item: any) => {
+          const meta = Array.isArray(item.kpi_meta) ? item.kpi_meta[0] : item.kpi_meta;
+          return {
+            kpi_key: item.kpi_key,
+            name: meta?.name || 'Unknown KPI',
+            variant: meta?.chart_variant || 'line',
+            dashboard: meta?.dashboard || '',
+            unit: meta?.unit,
+            time_variants: meta?.time_variants || ['1D', '1W', '2W', '1M', '6M', '1Y'],
+            config: meta?.config || {},
+            product_sources: meta?.product_sources || [],
+            impact_value: item.user_impact_value,
+          };
+        });
+
+        setKpis(formattedData);
       } else {
-        const { data: summaries, error: summariesError } = await supabase
-          .from('impact_summaries_overall' as any)
-          .select('kpi_key, impact_value');
+        // Overall Impact - query kpi_meta with left join to impact_summaries_overall
+        const { data: overallData, error: overallError, count } = await supabase
+          .from('kpi_meta')
+          .select(`
+            kpi_key,
+            name,
+            dashboard,
+            chart_variant,
+            unit,
+            product_sources,
+            time_variants,
+            config,
+            impact_summaries_overall(overall_impact_value)
+          `, { count: 'exact' })
+          .order('name', { ascending: true })
+          .range(offset, offset + PAGE_SIZE - 1);
 
-        if (summariesError) {
-          console.warn('[Impact] Error fetching overall summaries:', summariesError);
-        } else {
-          summaries?.forEach((s: any) => {
-            summariesMap.set(s.kpi_key, s.impact_value);
-          });
+        if (overallError) {
+          console.error('[Impact] Error loading Overall Impact:', overallError);
+          setKpis([]);
+          setTotalCount(0);
+          return;
         }
+
+        setTotalCount(count || 0);
+
+        const formattedData = (overallData || []).map((item: any) => {
+          const impactData = Array.isArray(item.impact_summaries_overall) 
+            ? item.impact_summaries_overall[0] 
+            : item.impact_summaries_overall;
+          
+          return {
+            kpi_key: item.kpi_key,
+            name: item.name,
+            variant: item.chart_variant || 'line',
+            dashboard: item.dashboard,
+            unit: item.unit,
+            time_variants: item.time_variants || ['1D', '1W', '2W', '1M', '6M', '1Y'],
+            config: item.config || {},
+            product_sources: item.product_sources || [],
+            impact_value: impactData?.overall_impact_value,
+          };
+        });
+
+        setKpis(formattedData);
       }
-
-      // 3. Map registry cards with their impact summaries
-      const formattedData = cardRegistry.map((card: any) => {
-        const impactValue = summariesMap.get(card.kpi_key);
-        const sources = card.product_sources || [];
-        
-        return {
-          kpi_key: card.kpi_key,
-          name: card.name,
-          variant: card.chart_variant || 'line',
-          dashboard: card.dashboard,
-          unit: card.unit,
-          time_variants: card.time_variants || ['1D', '1W', '2W', '1M', '6M', '1Y'],
-          config: card.config || {},
-          product_sources: sources,
-          impact_value: impactValue,
-        };
-      });
-
-      setKpis(formattedData);
     } catch (error: any) {
       console.error('[Impact] Error fetching KPIs:', error);
+      setKpis([]);
+      setTotalCount(0);
     } finally {
       setIsLoading(false);
     }
@@ -150,9 +183,16 @@ export default function Impact() {
               <Loader2 className="animate-spin mr-2 h-8 w-8" />
               <span className="text-muted-foreground">Loading impact data...</span>
             </div>
+          ) : activeTab === 'my' && !userId ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">Sign in to see your personalized impact</p>
+              <Button onClick={() => window.location.href = '/login'}>Sign In</Button>
+            </div>
           ) : kpis.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              Error loading impact registry or no cards configured
+              {activeTab === 'my' 
+                ? 'No personalized impact yet. Once AVIR runs recommendations on your data, your impact will appear here.'
+                : 'No impact data available'}
             </div>
           ) : (
             <>
@@ -168,7 +208,7 @@ export default function Impact() {
                     time_variants={kpi.time_variants}
                     config={kpi.config}
                     product_sources={kpi.product_sources}
-                    impact_value={kpi.impact_value}
+                    impact_value={typeof kpi.impact_value === 'string' ? parseFloat(kpi.impact_value) : kpi.impact_value}
                     context={activeTab}
                     userId={activeTab === 'my' ? userId : null}
                   />
