@@ -13,6 +13,7 @@ interface ImpactKpiData {
   variant: string;
   dashboard: string;
   config: any;
+  product_sources: string[];
   impact_value?: number;
   impact_unit?: string;
   impact_summary?: string;
@@ -42,8 +43,40 @@ export default function Impact() {
   const fetchKpis = async () => {
     setIsLoading(true);
     try {
+      // 1. Get all impact-enabled KPIs from the registry view
+      const { data: cardRegistry, error: registryError } = await supabase
+        .from('v_impact_card_registry' as any)
+        .select('*')
+        .order('dashboard', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (registryError) throw registryError;
+
+      if (!cardRegistry || cardRegistry.length === 0) {
+        setKpis([]);
+        return;
+      }
+
+      // 2. Get product sources for all KPIs
+      const { data: sourcesData, error: sourcesError } = await supabase
+        .from('v_kpi_product_sources' as any)
+        .select('*');
+
+      if (sourcesError) throw sourcesError;
+
+      // Build a map: kpi_key -> array of product sources
+      const sourcesMap = new Map<string, string[]>();
+      sourcesData?.forEach((row: any) => {
+        if (!sourcesMap.has(row.kpi_key)) {
+          sourcesMap.set(row.kpi_key, []);
+        }
+        sourcesMap.get(row.kpi_key)!.push(row.source);
+      });
+
+      // 3. Get impact summaries based on active tab
+      let summariesMap = new Map<string, any>();
+      
       if (activeTab === 'my') {
-        // Fetch user impact summaries
         const { data: summaries, error: summariesError } = await supabase
           .from('impact_summaries_user' as any)
           .select('*')
@@ -52,48 +85,11 @@ export default function Impact() {
         if (summariesError) throw summariesError;
         
         console.log('[Impact] My Impact user:', userId, 'summaries:', summaries);
-
-        if (!summaries || summaries.length === 0) {
-          setKpis([]);
-          return;
-        }
-
-        // Fetch metadata for these KPIs
-        const kpiKeys = summaries.map((s: any) => s.kpi_key);
-        const { data: metaData, error: metaError } = await supabase
-          .from('kpi_meta')
-          .select('*')
-          .in('kpi_key', kpiKeys);
-
-        if (metaError) throw metaError;
-
-        // Merge data
-        const metaMap = new Map(metaData?.map((m: any) => [m.kpi_key, m]) || []);
-        const formattedData = summaries
-          .map((row: any) => {
-            const meta = metaMap.get(row.kpi_key);
-            if (!meta) return null;
-            return {
-              kpi_key: row.kpi_key,
-              name: meta.name,
-              variant: meta.variant,
-              dashboard: meta.dashboard,
-              config: meta.config,
-              impact_value: row.impact_value,
-              impact_unit: row.impact_unit,
-              impact_summary: row.impact_summary,
-              period: row.period,
-            };
-          })
-          .filter(Boolean)
-          .sort((a: any, b: any) => {
-            if (a.dashboard !== b.dashboard) return a.dashboard.localeCompare(b.dashboard);
-            return a.name.localeCompare(b.name);
-          });
         
-        setKpis(formattedData);
+        summaries?.forEach((s: any) => {
+          summariesMap.set(s.kpi_key, s);
+        });
       } else {
-        // Fetch overall impact summaries
         const { data: summaries, error: summariesError } = await supabase
           .from('impact_summaries_overall' as any)
           .select('*');
@@ -101,47 +97,32 @@ export default function Impact() {
         if (summariesError) throw summariesError;
         
         console.log('[Impact] Overall Impact summaries:', summaries);
-
-        if (!summaries || summaries.length === 0) {
-          setKpis([]);
-          return;
-        }
-
-        // Fetch metadata for these KPIs
-        const kpiKeys = summaries.map((s: any) => s.kpi_key);
-        const { data: metaData, error: metaError } = await supabase
-          .from('kpi_meta')
-          .select('*')
-          .in('kpi_key', kpiKeys);
-
-        if (metaError) throw metaError;
-
-        // Merge data
-        const metaMap = new Map(metaData?.map((m: any) => [m.kpi_key, m]) || []);
-        const formattedData = summaries
-          .map((row: any) => {
-            const meta = metaMap.get(row.kpi_key);
-            if (!meta) return null;
-            return {
-              kpi_key: row.kpi_key,
-              name: meta.name,
-              variant: meta.variant,
-              dashboard: meta.dashboard,
-              config: meta.config,
-              impact_value: row.impact_value,
-              impact_unit: row.impact_unit,
-              impact_summary: row.impact_summary,
-              period: row.period,
-            };
-          })
-          .filter(Boolean)
-          .sort((a: any, b: any) => {
-            if (a.dashboard !== b.dashboard) return a.dashboard.localeCompare(b.dashboard);
-            return a.name.localeCompare(b.name);
-          });
         
-        setKpis(formattedData);
+        summaries?.forEach((s: any) => {
+          summariesMap.set(s.kpi_key, s);
+        });
       }
+
+      // 4. Merge all data together
+      const formattedData = cardRegistry.map((card: any) => {
+        const summary = summariesMap.get(card.kpi_key);
+        const sources = sourcesMap.get(card.kpi_key) || [];
+        
+        return {
+          kpi_key: card.kpi_key,
+          name: card.name,
+          variant: card.chart_variant,
+          dashboard: card.dashboard,
+          config: { sources, product_source: card.primary_source },
+          product_sources: sources,
+          impact_value: summary?.impact_value,
+          impact_unit: summary?.impact_unit,
+          impact_summary: summary?.impact_summary,
+          period: summary?.period,
+        };
+      });
+
+      setKpis(formattedData);
     } catch (error: any) {
       console.error('[Impact] Error fetching KPIs:', error);
     } finally {
@@ -185,6 +166,7 @@ export default function Impact() {
                     variant={kpi.variant}
                     dashboard={kpi.dashboard}
                     config={kpi.config}
+                    product_sources={kpi.product_sources}
                     impact_value={kpi.impact_value}
                     impact_unit={kpi.impact_unit}
                     impact_summary={kpi.impact_summary}

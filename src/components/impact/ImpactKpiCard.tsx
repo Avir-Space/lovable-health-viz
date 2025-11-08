@@ -19,6 +19,7 @@ interface ImpactKpiCardProps {
   variant: string;
   dashboard: string;
   config: any;
+  product_sources?: string[];
   impact_value?: number;
   impact_unit?: string;
   impact_summary?: string;
@@ -33,6 +34,7 @@ export function ImpactKpiCard({
   variant,
   dashboard,
   config,
+  product_sources = [],
   impact_value,
   impact_unit,
   impact_summary,
@@ -48,7 +50,7 @@ export function ImpactKpiCard({
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const { toast } = useToast();
   
-  const productSources = config?.sources || config?.product_sources || [];
+  const productSources = product_sources || config?.sources || config?.product_sources || [];
 
   useEffect(() => {
     fetchData();
