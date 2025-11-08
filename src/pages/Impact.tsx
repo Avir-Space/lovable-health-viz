@@ -6,138 +6,62 @@ import { Loader2 } from 'lucide-react';
 
 type ImpactContext = 'my' | 'overall';
 
-interface ImpactKpiData {
+interface KpiRegistry {
   kpi_key: string;
   name: string;
-  variant: string;
-  dashboard: string;
-  config: any;
-  impact_value?: number;
-  impact_unit?: string;
-  impact_summary?: string;
-  period?: string;
+  unit?: string;
+  product_sources?: string[];
+  action_title?: string;
+  action_cta_label?: string;
 }
 
 export default function Impact() {
   const [activeTab, setActiveTab] = useState<ImpactContext>('my');
-  const [kpis, setKpis] = useState<ImpactKpiData[]>([]);
+  const [kpis, setKpis] = useState<KpiRegistry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Get current user
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data.user?.id || null);
     });
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'my' && !userId) return;
     fetchKpis();
   }, [activeTab, userId]);
 
   const fetchKpis = async () => {
     setIsLoading(true);
     try {
-      if (activeTab === 'my') {
-        // Fetch user impact summaries
-        const { data: summaries, error: summariesError } = await supabase
-          .from('impact_summaries_user' as any)
-          .select('*')
-          .eq('user_id', userId);
+      const { data, error } = await supabase
+        .from('v_impact_card_registry' as any)
+        .select('kpi_key, name, unit, product_sources, action_title, action_cta_label')
+        .order('name', { ascending: true });
 
-        if (summariesError) throw summariesError;
-        
-        console.log('[Impact] My Impact user:', userId, 'summaries:', summaries);
+      if (error) throw error;
 
-        if (!summaries || summaries.length === 0) {
-          setKpis([]);
-          return;
-        }
+      // Filter KPIs that have timeseries data for the active context
+      const kpisWithData = await Promise.all(
+        (data || []).map(async (kpi: any) => {
+          const query = supabase
+            .from('impact_timeseries' as any)
+            .select('id', { count: 'exact', head: true })
+            .eq('kpi_key', kpi.kpi_key)
+            .eq('context', activeTab)
+            .limit(1);
 
-        // Fetch metadata for these KPIs
-        const kpiKeys = summaries.map((s: any) => s.kpi_key);
-        const { data: metaData, error: metaError } = await supabase
-          .from('kpi_meta')
-          .select('*')
-          .in('kpi_key', kpiKeys);
+          if (activeTab === 'my' && userId) {
+            query.eq('user_id', userId);
+          }
 
-        if (metaError) throw metaError;
+          const { count } = await query;
+          return count && count > 0 ? kpi : null;
+        })
+      );
 
-        // Merge data
-        const metaMap = new Map(metaData?.map((m: any) => [m.kpi_key, m]) || []);
-        const formattedData = summaries
-          .map((row: any) => {
-            const meta = metaMap.get(row.kpi_key);
-            if (!meta) return null;
-            return {
-              kpi_key: row.kpi_key,
-              name: meta.name,
-              variant: meta.variant,
-              dashboard: meta.dashboard,
-              config: meta.config,
-              impact_value: row.impact_value,
-              impact_unit: row.impact_unit,
-              impact_summary: row.impact_summary,
-              period: row.period,
-            };
-          })
-          .filter(Boolean)
-          .sort((a: any, b: any) => {
-            if (a.dashboard !== b.dashboard) return a.dashboard.localeCompare(b.dashboard);
-            return a.name.localeCompare(b.name);
-          });
-        
-        setKpis(formattedData);
-      } else {
-        // Fetch overall impact summaries
-        const { data: summaries, error: summariesError } = await supabase
-          .from('impact_summaries_overall' as any)
-          .select('*');
-
-        if (summariesError) throw summariesError;
-        
-        console.log('[Impact] Overall Impact summaries:', summaries);
-
-        if (!summaries || summaries.length === 0) {
-          setKpis([]);
-          return;
-        }
-
-        // Fetch metadata for these KPIs
-        const kpiKeys = summaries.map((s: any) => s.kpi_key);
-        const { data: metaData, error: metaError } = await supabase
-          .from('kpi_meta')
-          .select('*')
-          .in('kpi_key', kpiKeys);
-
-        if (metaError) throw metaError;
-
-        // Merge data
-        const metaMap = new Map(metaData?.map((m: any) => [m.kpi_key, m]) || []);
-        const formattedData = summaries
-          .map((row: any) => {
-            const meta = metaMap.get(row.kpi_key);
-            if (!meta) return null;
-            return {
-              kpi_key: row.kpi_key,
-              name: meta.name,
-              variant: meta.variant,
-              dashboard: meta.dashboard,
-              config: meta.config,
-              impact_value: row.impact_value,
-              impact_unit: row.impact_unit,
-              impact_summary: row.impact_summary,
-              period: row.period,
-            };
-          })
-          .filter(Boolean)
-          .sort((a: any, b: any) => {
-            if (a.dashboard !== b.dashboard) return a.dashboard.localeCompare(b.dashboard);
-            return a.name.localeCompare(b.name);
-          });
-        
-        setKpis(formattedData);
-      }
+      setKpis(kpisWithData.filter(Boolean) as KpiRegistry[]);
     } catch (error: any) {
       console.error('[Impact] Error fetching KPIs:', error);
     } finally {
@@ -177,13 +101,10 @@ export default function Impact() {
                   key={kpi.kpi_key}
                   kpi_key={kpi.kpi_key}
                   name={kpi.name}
-                  variant={kpi.variant}
-                  dashboard={kpi.dashboard}
-                  config={kpi.config}
-                  impact_value={kpi.impact_value}
-                  impact_unit={kpi.impact_unit}
-                  impact_summary={kpi.impact_summary}
-                  period={kpi.period}
+                  unit={kpi.unit}
+                  product_sources={kpi.product_sources}
+                  action_title={kpi.action_title}
+                  action_cta_label={kpi.action_cta_label}
                   context={activeTab}
                   userId={activeTab === 'my' ? userId : null}
                 />
