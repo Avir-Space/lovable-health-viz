@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { ImpactKpiCard } from '@/components/impact/ImpactKpiCard';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
@@ -23,6 +24,8 @@ export default function Impact() {
   const [kpis, setKpis] = useState<ImpactKpiData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -33,6 +36,7 @@ export default function Impact() {
   useEffect(() => {
     if (activeTab === 'my' && !userId) return;
     fetchKpis();
+    setCurrentPage(1); // Reset to page 1 when switching tabs
   }, [activeTab, userId]);
 
   const fetchKpis = async () => {
@@ -171,24 +175,50 @@ export default function Impact() {
               No impact data available for this view
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {kpis.map((kpi) => (
-                <ImpactKpiCard
-                  key={kpi.kpi_key}
-                  kpi_key={kpi.kpi_key}
-                  name={kpi.name}
-                  variant={kpi.variant}
-                  dashboard={kpi.dashboard}
-                  config={kpi.config}
-                  impact_value={kpi.impact_value}
-                  impact_unit={kpi.impact_unit}
-                  impact_summary={kpi.impact_summary}
-                  period={kpi.period}
-                  context={activeTab}
-                  userId={activeTab === 'my' ? userId : null}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {kpis.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((kpi) => (
+                  <ImpactKpiCard
+                    key={kpi.kpi_key}
+                    kpi_key={kpi.kpi_key}
+                    name={kpi.name}
+                    variant={kpi.variant}
+                    dashboard={kpi.dashboard}
+                    config={kpi.config}
+                    impact_value={kpi.impact_value}
+                    impact_unit={kpi.impact_unit}
+                    impact_summary={kpi.impact_summary}
+                    period={kpi.period}
+                    context={activeTab}
+                    userId={activeTab === 'my' ? userId : null}
+                  />
+                ))}
+              </div>
+              
+              {kpis.length > itemsPerPage && (
+                <div className="flex items-center justify-center gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground px-4">
+                    Page {currentPage} of {Math.ceil(kpis.length / itemsPerPage)}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(kpis.length / itemsPerPage), p + 1))}
+                    disabled={currentPage === Math.ceil(kpis.length / itemsPerPage)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
       </Tabs>

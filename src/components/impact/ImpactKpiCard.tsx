@@ -201,9 +201,13 @@ export function ImpactKpiCard({
             </div>
           ) : chartData.length > 0 ? (
             <LineChart data={chartData} unit={impact_unit || ''} xLabel="Month" yLabel="Impact" />
+          ) : impact_value !== undefined ? (
+            <div className="h-full w-full flex items-center justify-center text-[12px] text-muted-foreground">
+              No chart data available
+            </div>
           ) : (
             <div className="h-full w-full flex items-center justify-center text-[12px] text-muted-foreground">
-              No data available
+              No impact data available for this KPI
             </div>
           )}
         </div>
