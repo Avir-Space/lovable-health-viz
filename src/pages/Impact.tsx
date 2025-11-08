@@ -38,65 +38,103 @@ export default function Impact() {
   const fetchKpis = async () => {
     setIsLoading(true);
     try {
-      let query;
-      
       if (activeTab === 'my') {
-        const { data, error } = await supabase
+        // Fetch user impact summaries
+        const { data: summaries, error: summariesError } = await supabase
           .from('impact_summaries_user' as any)
-          .select(`
-            kpi_key,
-            impact_value,
-            impact_unit,
-            impact_summary,
-            period,
-            kpi_meta!inner(name, variant, dashboard, config)
-          `)
-          .eq('user_id', userId)
-          .order('kpi_meta(dashboard)', { ascending: true })
-          .order('kpi_meta(name)', { ascending: true });
+          .select('*')
+          .eq('user_id', userId);
 
-        if (error) throw error;
+        if (summariesError) throw summariesError;
         
-        const formattedData = (data || []).map((row: any) => ({
-          kpi_key: row.kpi_key,
-          name: row.kpi_meta.name,
-          variant: row.kpi_meta.variant,
-          dashboard: row.kpi_meta.dashboard,
-          config: row.kpi_meta.config,
-          impact_value: row.impact_value,
-          impact_unit: row.impact_unit,
-          impact_summary: row.impact_summary,
-          period: row.period,
-        }));
+        console.log('[Impact] My Impact user:', userId, 'summaries:', summaries);
+
+        if (!summaries || summaries.length === 0) {
+          setKpis([]);
+          return;
+        }
+
+        // Fetch metadata for these KPIs
+        const kpiKeys = summaries.map((s: any) => s.kpi_key);
+        const { data: metaData, error: metaError } = await supabase
+          .from('kpi_meta')
+          .select('*')
+          .in('kpi_key', kpiKeys);
+
+        if (metaError) throw metaError;
+
+        // Merge data
+        const metaMap = new Map(metaData?.map((m: any) => [m.kpi_key, m]) || []);
+        const formattedData = summaries
+          .map((row: any) => {
+            const meta = metaMap.get(row.kpi_key);
+            if (!meta) return null;
+            return {
+              kpi_key: row.kpi_key,
+              name: meta.name,
+              variant: meta.variant,
+              dashboard: meta.dashboard,
+              config: meta.config,
+              impact_value: row.impact_value,
+              impact_unit: row.impact_unit,
+              impact_summary: row.impact_summary,
+              period: row.period,
+            };
+          })
+          .filter(Boolean)
+          .sort((a: any, b: any) => {
+            if (a.dashboard !== b.dashboard) return a.dashboard.localeCompare(b.dashboard);
+            return a.name.localeCompare(b.name);
+          });
         
         setKpis(formattedData);
       } else {
-        const { data, error } = await supabase
+        // Fetch overall impact summaries
+        const { data: summaries, error: summariesError } = await supabase
           .from('impact_summaries_overall' as any)
-          .select(`
-            kpi_key,
-            impact_value,
-            impact_unit,
-            impact_summary,
-            period,
-            kpi_meta!inner(name, variant, dashboard, config)
-          `)
-          .order('kpi_meta(dashboard)', { ascending: true })
-          .order('kpi_meta(name)', { ascending: true });
+          .select('*');
 
-        if (error) throw error;
+        if (summariesError) throw summariesError;
         
-        const formattedData = (data || []).map((row: any) => ({
-          kpi_key: row.kpi_key,
-          name: row.kpi_meta.name,
-          variant: row.kpi_meta.variant,
-          dashboard: row.kpi_meta.dashboard,
-          config: row.kpi_meta.config,
-          impact_value: row.impact_value,
-          impact_unit: row.impact_unit,
-          impact_summary: row.impact_summary,
-          period: row.period,
-        }));
+        console.log('[Impact] Overall Impact summaries:', summaries);
+
+        if (!summaries || summaries.length === 0) {
+          setKpis([]);
+          return;
+        }
+
+        // Fetch metadata for these KPIs
+        const kpiKeys = summaries.map((s: any) => s.kpi_key);
+        const { data: metaData, error: metaError } = await supabase
+          .from('kpi_meta')
+          .select('*')
+          .in('kpi_key', kpiKeys);
+
+        if (metaError) throw metaError;
+
+        // Merge data
+        const metaMap = new Map(metaData?.map((m: any) => [m.kpi_key, m]) || []);
+        const formattedData = summaries
+          .map((row: any) => {
+            const meta = metaMap.get(row.kpi_key);
+            if (!meta) return null;
+            return {
+              kpi_key: row.kpi_key,
+              name: meta.name,
+              variant: meta.variant,
+              dashboard: meta.dashboard,
+              config: meta.config,
+              impact_value: row.impact_value,
+              impact_unit: row.impact_unit,
+              impact_summary: row.impact_summary,
+              period: row.period,
+            };
+          })
+          .filter(Boolean)
+          .sort((a: any, b: any) => {
+            if (a.dashboard !== b.dashboard) return a.dashboard.localeCompare(b.dashboard);
+            return a.name.localeCompare(b.name);
+          });
         
         setKpis(formattedData);
       }
