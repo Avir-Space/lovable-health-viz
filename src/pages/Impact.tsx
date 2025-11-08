@@ -12,12 +12,11 @@ interface ImpactKpiData {
   name: string;
   variant: string;
   dashboard: string;
+  unit?: string;
+  time_variants?: string[];
   config: any;
   product_sources: string[];
   impact_value?: number;
-  impact_unit?: string;
-  impact_summary?: string;
-  period?: string;
 }
 
 export default function Impact() {
@@ -75,38 +74,38 @@ export default function Impact() {
       setTotalCount(count || 0);
 
       // 2. Get impact summaries based on active tab
-      let summariesMap = new Map<string, any>();
+      let summariesMap = new Map<string, number>();
       
       if (activeTab === 'my') {
         const { data: summaries, error: summariesError } = await supabase
           .from('impact_summaries_user' as any)
-          .select('*')
+          .select('kpi_key, impact_value')
           .eq('user_id', userId);
 
         if (summariesError) {
           console.warn('[Impact] Error fetching user summaries:', summariesError);
         } else {
           summaries?.forEach((s: any) => {
-            summariesMap.set(s.kpi_key, s);
+            summariesMap.set(s.kpi_key, s.impact_value);
           });
         }
       } else {
         const { data: summaries, error: summariesError } = await supabase
           .from('impact_summaries_overall' as any)
-          .select('*');
+          .select('kpi_key, impact_value');
 
         if (summariesError) {
           console.warn('[Impact] Error fetching overall summaries:', summariesError);
         } else {
           summaries?.forEach((s: any) => {
-            summariesMap.set(s.kpi_key, s);
+            summariesMap.set(s.kpi_key, s.impact_value);
           });
         }
       }
 
       // 3. Map registry cards with their impact summaries
       const formattedData = cardRegistry.map((card: any) => {
-        const summary = summariesMap.get(card.kpi_key);
+        const impactValue = summariesMap.get(card.kpi_key);
         const sources = card.product_sources || [];
         
         return {
@@ -114,12 +113,11 @@ export default function Impact() {
           name: card.name,
           variant: card.chart_variant || 'line',
           dashboard: card.dashboard,
+          unit: card.unit,
+          time_variants: card.time_variants || ['1D', '1W', '2W', '1M', '6M', '1Y'],
           config: card.config || {},
           product_sources: sources,
-          impact_value: summary?.impact_value,
-          impact_unit: summary?.impact_unit,
-          impact_summary: summary?.impact_summary,
-          period: summary?.period || '1M',
+          impact_value: impactValue,
         };
       });
 
@@ -166,12 +164,11 @@ export default function Impact() {
                     name={kpi.name}
                     variant={kpi.variant}
                     dashboard={kpi.dashboard}
+                    unit={kpi.unit}
+                    time_variants={kpi.time_variants}
                     config={kpi.config}
                     product_sources={kpi.product_sources}
                     impact_value={kpi.impact_value}
-                    impact_unit={kpi.impact_unit}
-                    impact_summary={kpi.impact_summary}
-                    period={kpi.period}
                     context={activeTab}
                     userId={activeTab === 'my' ? userId : null}
                   />

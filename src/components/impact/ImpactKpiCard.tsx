@@ -18,12 +18,11 @@ interface ImpactKpiCardProps {
   name: string;
   variant: string;
   dashboard: string;
+  unit?: string;
+  time_variants?: string[];
   config: any;
   product_sources?: string[];
   impact_value?: number;
-  impact_unit?: string;
-  impact_summary?: string;
-  period?: string;
   context: ImpactContext;
   userId?: string | null;
 }
@@ -33,12 +32,11 @@ export function ImpactKpiCard({
   name,
   variant,
   dashboard,
+  unit,
+  time_variants = ['1D', '1W', '2W', '1M', '6M', '1Y'],
   config,
   product_sources = [],
   impact_value,
-  impact_unit,
-  impact_summary,
-  period,
   context,
   userId,
 }: ImpactKpiCardProps) {
@@ -51,6 +49,13 @@ export function ImpactKpiCard({
   const { toast } = useToast();
   
   const productSources = product_sources || config?.sources || config?.product_sources || [];
+  
+  // Generate AI summary based on impact value
+  const impact_summary = impact_value !== undefined
+    ? context === 'my'
+      ? `In the selected period, AVIR helped this user improve "${name}" by ${impact_value}${unit ? ' ' + unit : ''} using insights from the connected data stack.`
+      : `Across all users/tenants, AVIR influenced "${name}" by ${impact_value}${unit ? ' ' + unit : ''} over the selected period.`
+    : null;
 
   useEffect(() => {
     fetchData();
@@ -188,8 +193,8 @@ export function ImpactKpiCard({
             </div>
           )}
 
-          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>Period: {period || '30d'}</span>
+          <div className="flex items-center justify-between text-[11px] text-muted-foreground gap-2">
+            <span className="shrink-0">Period:</span>
             <RangeChips selected={range} onChange={setRange} />
           </div>
         </div>
@@ -202,7 +207,7 @@ export function ImpactKpiCard({
               <span className="text-[12px] text-muted-foreground">Loading…</span>
             </div>
           ) : chartData.length > 0 ? (
-            <LineChart data={chartData} unit={impact_unit || ''} xLabel="Month" yLabel="Impact" />
+            <LineChart data={chartData} unit={unit || ''} xLabel="Month" yLabel="Impact" />
           ) : (
             <div className="h-full w-full flex items-center justify-center text-[12px] text-muted-foreground">
               {impact_value !== undefined ? 'No chart data available' : 'No impact data available for this KPI and period yet'}
@@ -212,10 +217,14 @@ export function ImpactKpiCard({
 
         {/* Footer */}
         <div className="space-y-2">
-          {impact_value !== undefined && (
+          {impact_value !== undefined ? (
             <div className="text-xs">
               <span className="font-semibold">Impact: </span>
-              <span className="text-foreground">{impact_value} {impact_unit || ''}</span>
+              <span className="text-foreground">{impact_value} {unit || ''}</span>
+            </div>
+          ) : (
+            <div className="text-xs text-muted-foreground">
+              {context === 'my' ? 'No tracked impact for this user yet.' : 'No overall impact computed yet.'}
             </div>
           )}
           
@@ -283,17 +292,16 @@ export function ImpactKpiCard({
                   <h3 className="text-sm font-semibold">AI Impact Summary</h3>
                   <p className="text-sm leading-relaxed">{impact_summary || 'No summary available'}</p>
                   
-                  {impact_value !== undefined && (
+                  {impact_value !== undefined ? (
                     <div className="flex items-center justify-between pt-2 border-t">
                       <span className="text-sm font-medium">Impact Value:</span>
-                      <span className="text-base font-semibold">{impact_value} {impact_unit || ''}</span>
+                      <span className="text-base font-semibold">{impact_value} {unit || ''}</span>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground pt-2 border-t">
+                      {context === 'my' ? 'No tracked impact for this user yet.' : 'No overall impact computed yet.'}
                     </div>
                   )}
-                  
-                  <div className="flex items-center justify-between text-sm pt-2">
-                    <span className="text-muted-foreground">Period:</span>
-                    <span className="font-medium">{period || '30d'}</span>
-                  </div>
                 </div>
 
                 <div>
@@ -331,62 +339,16 @@ export function ImpactKpiCard({
                 </div>
 
                 <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
-                  <h3 className="text-sm font-semibold mb-2">Detailed Context</h3>
+                  <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    AI Insights
+                  </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     This impact reflects AVIR's contribution to improving operational reliability, 
-                    compliance, and cost efficiency for this KPI.
+                    compliance, and cost efficiency for this KPI. The AI continuously monitors data 
+                    from connected systems and provides actionable recommendations to drive measurable improvements.
                   </p>
                 </div>
-
-                {slideoverData?.registry?.action_title && (
-                  <div className="space-y-3">
-                    <h3 className="text-base font-semibold flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-primary" />
-                      {slideoverData.registry.action_title}
-                    </h3>
-                    
-                    {slideoverData.registry?.why_this_action && (
-                      <div>
-                        <h4 className="text-sm font-medium mb-1.5">Why This Action</h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {slideoverData.registry.why_this_action}
-                        </p>
-                      </div>
-                    )}
-
-                    {slideoverData.registry?.evidence_section && (
-                      <div>
-                        <h4 className="text-sm font-medium mb-1.5">Evidence</h4>
-                        <div className="space-y-1.5">
-                          {slideoverData.registry.evidence_section.split('•').filter((item: string) => item.trim()).map((item: string, idx: number) => (
-                            <div key={idx} className="flex gap-2 text-sm text-muted-foreground">
-                              <span className="text-primary">•</span>
-                              <span className="flex-1">{item.trim()}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {slideoverData.registry?.impact_if_ignored && (
-                      <div>
-                        <h4 className="text-sm font-medium mb-1.5">If Ignored</h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {slideoverData.registry.impact_if_ignored}
-                        </p>
-                      </div>
-                    )}
-
-                    {slideoverData.registry?.expected_gain && (
-                      <div>
-                        <h4 className="text-sm font-medium mb-1.5">Expected Gain</h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {slideoverData.registry.expected_gain}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
 
                 <div className="flex gap-3 pt-4">
                   <Button className="flex-1" onClick={() => {
