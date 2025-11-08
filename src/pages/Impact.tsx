@@ -43,7 +43,7 @@ export default function Impact() {
   const fetchKpis = async () => {
     setIsLoading(true);
     try {
-      // 1. Get all impact-enabled KPIs from the registry view
+      // 1. Get all impact-enabled KPIs from the registry view (source of truth for cards)
       const { data: cardRegistry, error: registryError } = await supabase
         .from('v_impact_card_registry' as any)
         .select('*')
@@ -52,7 +52,9 @@ export default function Impact() {
 
       if (registryError) throw registryError;
 
+      // If registry is empty, that's a real configuration issue
       if (!cardRegistry || cardRegistry.length === 0) {
+        console.warn('[Impact] No cards in v_impact_card_registry');
         setKpis([]);
         return;
       }
@@ -62,7 +64,7 @@ export default function Impact() {
         .from('v_kpi_product_sources' as any)
         .select('*');
 
-      if (sourcesError) throw sourcesError;
+      if (sourcesError) console.warn('[Impact] Error fetching product sources:', sourcesError);
 
       // Build a map: kpi_key -> array of product sources
       const sourcesMap = new Map<string, string[]>();
@@ -73,7 +75,7 @@ export default function Impact() {
         sourcesMap.get(row.kpi_key)!.push(row.source);
       });
 
-      // 3. Get impact summaries based on active tab
+      // 3. Get impact summaries based on active tab (these are optional - cards render without them)
       let summariesMap = new Map<string, any>();
       
       if (activeTab === 'my') {
@@ -82,28 +84,30 @@ export default function Impact() {
           .select('*')
           .eq('user_id', userId);
 
-        if (summariesError) throw summariesError;
-        
-        console.log('[Impact] My Impact user:', userId, 'summaries:', summaries);
-        
-        summaries?.forEach((s: any) => {
-          summariesMap.set(s.kpi_key, s);
-        });
+        if (summariesError) {
+          console.warn('[Impact] Error fetching user summaries:', summariesError);
+        } else {
+          console.log('[Impact] My Impact user:', userId, 'summaries:', summaries);
+          summaries?.forEach((s: any) => {
+            summariesMap.set(s.kpi_key, s);
+          });
+        }
       } else {
         const { data: summaries, error: summariesError } = await supabase
           .from('impact_summaries_overall' as any)
           .select('*');
 
-        if (summariesError) throw summariesError;
-        
-        console.log('[Impact] Overall Impact summaries:', summaries);
-        
-        summaries?.forEach((s: any) => {
-          summariesMap.set(s.kpi_key, s);
-        });
+        if (summariesError) {
+          console.warn('[Impact] Error fetching overall summaries:', summariesError);
+        } else {
+          console.log('[Impact] Overall Impact summaries:', summaries);
+          summaries?.forEach((s: any) => {
+            summariesMap.set(s.kpi_key, s);
+          });
+        }
       }
 
-      // 4. Merge all data together
+      // 4. Always render all cards from registry, merging in summaries where available
       const formattedData = cardRegistry.map((card: any) => {
         const summary = summariesMap.get(card.kpi_key);
         const sources = sourcesMap.get(card.kpi_key) || [];
@@ -153,7 +157,7 @@ export default function Impact() {
             </div>
           ) : kpis.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              No impact data available for this view
+              No impact cards configured in the registry
             </div>
           ) : (
             <>
