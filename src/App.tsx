@@ -3,7 +3,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { MainLayout } from "./components/layout/MainLayout";
+import Login from "./pages/Login";
+import AuthCallback from "./pages/AuthCallback";
 import Index from "./pages/Index";
 import MyDashboard from "./pages/MyDashboard";
 import Impact from "./pages/Impact";
@@ -28,24 +32,33 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <MainLayout>
+        <AuthProvider>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/my-dashboard" element={<MyDashboard />} />
-            <Route path="/impact" element={<Impact />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/dashboards/maintenance-health-overview" element={<MaintenanceHealthOverview />} />
-            <Route path="/dashboards/inventory-spares-visibility" element={<InventoryAndSparesVisibility />} />
-            <Route path="/dashboards/compliance-airworthiness" element={<ComplianceAirworthiness />} />
-            <Route path="/dashboards/ops-dispatch-reliability" element={<OpsDispatchReliability />} />
-            <Route path="/dashboards/fuel-efficiency" element={<FuelEfficiency />} />
-            <Route path="/dashboards/financial-procurement" element={<FinancialProcurement />} />
-            <Route path="/dashboards/crew-duty-snapshot" element={<CrewDutySnapshot />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="*" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/my-dashboard" element={<MyDashboard />} />
+                    <Route path="/impact" element={<Impact />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/admin" element={<Admin />} />
+                    <Route path="/dashboards/maintenance-health-overview" element={<MaintenanceHealthOverview />} />
+                    <Route path="/dashboards/inventory-spares-visibility" element={<InventoryAndSparesVisibility />} />
+                    <Route path="/dashboards/compliance-airworthiness" element={<ComplianceAirworthiness />} />
+                    <Route path="/dashboards/ops-dispatch-reliability" element={<OpsDispatchReliability />} />
+                    <Route path="/dashboards/fuel-efficiency" element={<FuelEfficiency />} />
+                    <Route path="/dashboards/financial-procurement" element={<FinancialProcurement />} />
+                    <Route path="/dashboards/crew-duty-snapshot" element={<CrewDutySnapshot />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </MainLayout>
+              </ProtectedRoute>
+            } />
           </Routes>
-        </MainLayout>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
