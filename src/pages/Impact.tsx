@@ -5,26 +5,42 @@ import { ImpactKpiCard } from '@/components/impact/ImpactKpiCard';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 type ImpactContext = 'my' | 'overall';
 
-interface ImpactKpiData {
+interface OverallImpactData {
   kpi_key: string;
-  name: string;
-  variant: string;
   dashboard: string;
+  kpi_name: string;
   unit?: string;
-  time_variants?: string[];
-  config: any;
+  chart_variant: string;
   product_sources: string[];
-  impact_value?: number | string;
-  summary_text?: string;
+  current_value?: number;
+  previous_value?: number;
+  impact_percentage?: number;
+  impact_trend?: string;
+  computed_at: string;
+}
+
+interface MyImpactData {
+  user_id: string;
+  kpi_key: string;
+  dashboard: string;
+  kpi_name: string;
+  unit?: string;
+  chart_variant: string;
+  product_sources: string[];
+  impact_value?: number;
+  computed_at: string;
 }
 
 export default function Impact() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ImpactContext>('my');
-  const [kpis, setKpis] = useState<ImpactKpiData[]>([]);
+  const [overallKpis, setOverallKpis] = useState<OverallImpactData[]>([]);
+  const [myKpis, setMyKpis] = useState<MyImpactData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -47,116 +63,53 @@ export default function Impact() {
       if (activeTab === 'my') {
         if (!user) {
           console.warn('[Impact] No authenticated user for My Impact');
-          setKpis([]);
+          setMyKpis([]);
           setTotalCount(0);
           setIsLoading(false);
           return;
         }
 
-        // Fetch registry from impact_kpi_registry
-        const { data: registry, error: registryError, count } = await supabase
-          .from('impact_kpi_registry' as any)
-          .select('kpi_key, dashboard, name, chart_variant, unit, product_sources, time_variants, config', { count: 'exact' })
-          .order('name', { ascending: true })
+        // Fetch from v_impact_my_cards view
+        const { data, error, count } = await supabase
+          .from('v_impact_my_cards' as any)
+          .select('user_id,kpi_key,dashboard,kpi_name,unit,chart_variant,product_sources,impact_value,computed_at', { count: 'exact' })
+          .eq('user_id', user.id)
+          .order('impact_value', { ascending: false, nullsFirst: false })
           .range(offset, offset + PAGE_SIZE - 1);
 
-        if (registryError) {
-          console.error('[Impact] Error loading registry:', registryError);
-          setKpis([]);
+        if (error) {
+          console.error('[Impact] Error loading My Impact:', error);
+          setMyKpis([]);
           setTotalCount(0);
           setIsLoading(false);
           return;
         }
 
+        setMyKpis((data as any) || []);
         setTotalCount(count || 0);
-
-        // Fetch user impact summaries for all KPIs (not paginated)
-        const { data: userSummaries, error: summariesError } = await supabase
-          .from('impact_summaries_user' as any)
-          .select('kpi_key, impact_value, summary_text')
-          .eq('user_id', user.id);
-
-        if (summariesError) {
-          console.error('[Impact] Error loading user summaries:', summariesError);
-        }
-
-        // Create map for quick lookup
-        const summariesMap = new Map(
-          (userSummaries as any[] || []).map((s: any) => [s.kpi_key, s])
-        );
-
-        // Merge registry with summaries
-        const formattedData = (registry || []).map((item: any) => {
-          const summary = summariesMap.get(item.kpi_key);
-          return {
-            kpi_key: item.kpi_key,
-            name: item.name,
-            variant: item.chart_variant || 'line',
-            dashboard: item.dashboard,
-            unit: item.unit,
-            time_variants: item.time_variants || ['1D', '1W', '2W', '1M', '6M', '1Y'],
-            config: item.config || {},
-            product_sources: item.product_sources || [],
-            impact_value: summary?.impact_value,
-            summary_text: summary?.summary_text,
-          };
-        });
-
-        setKpis(formattedData);
       } else {
-        // Overall Impact - use impact_kpi_registry as base
-        const { data: registry, error: registryError, count } = await supabase
-          .from('impact_kpi_registry' as any)
-          .select('kpi_key, dashboard, name, chart_variant, unit, product_sources, time_variants, config', { count: 'exact' })
-          .order('name', { ascending: true })
+        // Fetch from v_impact_overall_cards view
+        const { data, error, count } = await supabase
+          .from('v_impact_overall_cards' as any)
+          .select('kpi_key,dashboard,kpi_name,unit,chart_variant,product_sources,current_value,previous_value,impact_percentage,impact_trend,computed_at', { count: 'exact' })
+          .order('impact_percentage', { ascending: false, nullsFirst: false })
           .range(offset, offset + PAGE_SIZE - 1);
 
-        if (registryError) {
-          console.error('[Impact] Error loading registry:', registryError);
-          setKpis([]);
+        if (error) {
+          console.error('[Impact] Error loading Overall Impact:', error);
+          setOverallKpis([]);
           setTotalCount(0);
           setIsLoading(false);
           return;
         }
 
+        setOverallKpis((data as any) || []);
         setTotalCount(count || 0);
-
-        // Fetch overall impact summaries for all KPIs (not paginated)
-        const { data: overallSummaries, error: summariesError } = await supabase
-          .from('impact_summaries_overall' as any)
-          .select('kpi_key, impact_value, summary_text');
-
-        if (summariesError) {
-          console.error('[Impact] Error loading overall summaries:', summariesError);
-        }
-
-        // Create map for quick lookup
-        const summariesMap = new Map(
-          (overallSummaries as any[] || []).map((s: any) => [s.kpi_key, s])
-        );
-
-        // Merge registry with summaries
-        const formattedData = (registry || []).map((item: any) => {
-          const summary = summariesMap.get(item.kpi_key);
-          return {
-            kpi_key: item.kpi_key,
-            name: item.name,
-            variant: item.chart_variant || 'line',
-            dashboard: item.dashboard,
-            unit: item.unit,
-            time_variants: item.time_variants || ['1D', '1W', '2W', '1M', '6M', '1Y'],
-            config: item.config || {},
-            product_sources: item.product_sources || [],
-            impact_value: summary?.impact_value,
-            summary_text: summary?.summary_text,
-          };
-        });
-
-        setKpis(formattedData);
       }
     } catch (error: any) {
       console.error('[Impact] Error fetching KPIs:', error);
-      setKpis([]);
+      setMyKpis([]);
+      setOverallKpis([]);
       setTotalCount(0);
     } finally {
       setIsLoading(false);
@@ -187,34 +140,50 @@ export default function Impact() {
           ) : activeTab === 'my' && !user ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">Sign in to see your personalized impact</p>
-              <Button onClick={() => window.location.href = '/login'}>Sign In</Button>
+              <Button onClick={() => navigate('/login')}>Sign In</Button>
             </div>
-          ) : kpis.length === 0 ? (
+          ) : activeTab === 'my' && myKpis.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              {activeTab === 'my' 
-                ? 'No personalized impact yet. Once AVIR runs recommendations on your data, your impact will appear here.'
-                : 'No impact data available'}
+              No personalized impact yet. Once your account generates AVIR-driven changes on KPIs, they'll appear here.
+            </div>
+          ) : activeTab === 'overall' && overallKpis.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              No measurable impact available for this period. Connect data sources or extend your activity window.
             </div>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {kpis.map((kpi) => (
-                  <ImpactKpiCard
-                    key={kpi.kpi_key}
-                    kpi_key={kpi.kpi_key}
-                    name={kpi.name}
-                    variant={kpi.variant}
-                    dashboard={kpi.dashboard}
-                    unit={kpi.unit}
-                    time_variants={kpi.time_variants}
-                    config={kpi.config}
-                    product_sources={kpi.product_sources}
-                    impact_value={typeof kpi.impact_value === 'string' ? parseFloat(kpi.impact_value) : kpi.impact_value}
-                    summary_text={kpi.summary_text}
-                    context={activeTab}
-                    userId={activeTab === 'my' ? user?.id : null}
-                  />
-                ))}
+                {activeTab === 'my' 
+                  ? myKpis.map((kpi) => (
+                      <ImpactKpiCard
+                        key={kpi.kpi_key}
+                        kpi_key={kpi.kpi_key}
+                        name={kpi.kpi_name}
+                        variant={kpi.chart_variant}
+                        dashboard={kpi.dashboard}
+                        unit={kpi.unit}
+                        product_sources={kpi.product_sources}
+                        impact_value={kpi.impact_value}
+                        context="my"
+                      />
+                    ))
+                  : overallKpis.map((kpi) => (
+                      <ImpactKpiCard
+                        key={kpi.kpi_key}
+                        kpi_key={kpi.kpi_key}
+                        name={kpi.kpi_name}
+                        variant={kpi.chart_variant}
+                        dashboard={kpi.dashboard}
+                        unit={kpi.unit}
+                        product_sources={kpi.product_sources}
+                        current_value={kpi.current_value}
+                        previous_value={kpi.previous_value}
+                        impact_percentage={kpi.impact_percentage}
+                        impact_trend={kpi.impact_trend}
+                        context="overall"
+                      />
+                    ))
+                }
               </div>
               
               {totalCount > PAGE_SIZE && (
