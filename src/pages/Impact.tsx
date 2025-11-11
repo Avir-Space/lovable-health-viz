@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { RangeChips } from "@/components/ui/range-chips";
 import { ImpactKpiCard } from '@/components/impact/ImpactKpiCard';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { KpiRange } from '@/hooks/useKpiData';
 
 type ImpactContext = 'my' | 'overall';
 
@@ -33,23 +35,34 @@ interface ImpactKpiData {
   impact_value: number;
 }
 
+// Map periods to bucket values
+const PERIOD_TO_BUCKET: Record<KpiRange, string> = {
+  '1D': '1d',
+  '1W': '7d',
+  '2W': '14d',
+  '1M': '30d',
+  '6M': '6m',
+  '1Y': '1y',
+};
+
 export default function Impact() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ImpactContext>('my');
+  const [selectedPeriod, setSelectedPeriod] = useState<KpiRange>('1M');
   const [allKpis, setAllKpis] = useState<ImpactKpiData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
 
-  // Reset to page 1 when switching tabs
+  // Reset to page 1 when switching tabs or period
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab]);
+  }, [activeTab, selectedPeriod]);
 
   useEffect(() => {
     fetchKpis();
-  }, [activeTab, currentPage, user]);
+  }, [activeTab, selectedPeriod, user]);
 
   const fetchKpis = async () => {
     setIsLoading(true);
@@ -77,11 +90,12 @@ export default function Impact() {
       }
 
       // Step 2: Fetch impact timeseries data
+      const bucket = PERIOD_TO_BUCKET[selectedPeriod];
       let timeseriesQuery = supabase
         .from('impact_timeseries' as any)
-        .select('kpi_key, value, ts, user_id')
+        .select('kpi_key, value')
         .eq('context', activeTab)
-        .eq('bucket', '30d')
+        .eq('bucket', bucket)
         .eq('series', 'impact');
 
       // Filter by user_id for My Impact
@@ -137,10 +151,13 @@ export default function Impact() {
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ImpactContext)} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="my">My Impact</TabsTrigger>
-          <TabsTrigger value="overall">Overall Impact</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between mb-4">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="my">My Impact</TabsTrigger>
+            <TabsTrigger value="overall">Overall Impact</TabsTrigger>
+          </TabsList>
+          <RangeChips selected={selectedPeriod} onChange={setSelectedPeriod} />
+        </div>
 
         <TabsContent value={activeTab} className="space-y-6 mt-6">
           {isLoading ? (
