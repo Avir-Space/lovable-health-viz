@@ -11,32 +11,23 @@ import { KpiRange } from '@/hooks/useKpiData';
 
 type ImpactContext = 'my' | 'overall';
 
-interface KpiMetaData {
+interface RegistryCard {
   kpi_key: string;
   name: string;
   unit?: string;
-  variant: string;
-  dashboard: string;
+  product_sources?: string[];
+  action_title?: string;
+  action_cta_label?: string;
 }
 
-interface ImpactTimeseriesData {
-  kpi_key: string;
-  value: number;
-  ts: string;
-  user_id?: string;
-}
-
-interface ImpactKpiData {
-  kpi_key: string;
-  name: string;
-  unit?: string;
-  variant: string;
-  dashboard: string;
+interface ImpactKpiData extends RegistryCard {
   impact_value: number;
+  impact_unit?: string;
+  impact_summary?: string;
 }
 
-// Map periods to bucket values
-const PERIOD_TO_BUCKET: Record<KpiRange, string> = {
+// Map periods to stored period values
+const PERIOD_TO_DB: Record<KpiRange, string> = {
   '1D': '1d',
   '1W': '7d',
   '2W': '14d',
@@ -67,72 +58,96 @@ export default function Impact() {
   const fetchKpis = async () => {
     setIsLoading(true);
     try {
-      // For My Impact, check authentication first
-      if (activeTab === 'my') {
+      // Step 1: Load registry
+      const { data: registry, error: registryError } = await supabase
+        .from('v_impact_card_registry' as any)
+        .select('kpi_key, name, unit, product_sources, action_title, action_cta_label')
+        .order('name', { ascending: true });
+
+      if (registryError) {
+        console.error('[Impact] Error loading card registry:', registryError);
+        setAllKpis([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const period = PERIOD_TO_DB[selectedPeriod];
+
+      // Step 2: Load impact summaries based on active tab
+      if (activeTab === 'overall') {
+        const { data: overallSummaries, error: overallError } = await supabase
+          .from('impact_summaries_overall' as any)
+          .select('kpi_key, period, impact_value, impact_unit, impact_summary')
+          .eq('period', period);
+
+        if (overallError) {
+          console.error('[Impact] Error loading overall summaries:', overallError);
+          setAllKpis([]);
+          setIsLoading(false);
+          return;
+        }
+
+        // Join registry with summaries
+        const overallByKey = new Map(
+          (overallSummaries || []).map((row: any) => [row.kpi_key, row])
+        );
+
+        const cards = (registry || [])
+          .map((card: any) => {
+            const summary = overallByKey.get(card.kpi_key);
+            if (!summary) return null;
+            return {
+              ...card,
+              impact_value: Number(summary.impact_value) || 0,
+              impact_unit: summary.impact_unit,
+              impact_summary: summary.impact_summary,
+            };
+          })
+          .filter(Boolean) as ImpactKpiData[];
+
+        setAllKpis(cards);
+      } else {
+        // My Impact tab
         if (!user) {
           console.warn('[Impact] No authenticated user for My Impact');
           setAllKpis([]);
           setIsLoading(false);
           return;
         }
-      }
 
-      // Step 1: Fetch KPI metadata
-      const { data: kpiMeta, error: metaError } = await supabase
-        .from('kpi_meta')
-        .select('kpi_key, name, unit, variant, dashboard');
+        const { data: mySummaries, error: myError } = await supabase
+          .from('impact_summaries_user' as any)
+          .select('kpi_key, period, impact_value, impact_unit, impact_summary')
+          .eq('user_id', user.id)
+          .eq('period', period);
 
-      if (metaError) {
-        console.error('[Impact] Error loading KPI metadata:', metaError);
-        setAllKpis([]);
-        setIsLoading(false);
-        return;
-      }
-
-      // Step 2: Fetch impact timeseries data
-      const bucket = PERIOD_TO_BUCKET[selectedPeriod];
-      let timeseriesQuery = supabase
-        .from('impact_timeseries' as any)
-        .select('kpi_key, value')
-        .eq('context', activeTab)
-        .eq('bucket', bucket)
-        .eq('series', 'impact');
-
-      // Filter by user_id for My Impact
-      if (activeTab === 'my' && user) {
-        timeseriesQuery = timeseriesQuery.eq('user_id', user.id);
-      }
-
-      const { data: timeseriesData, error: timeseriesError } = await timeseriesQuery;
-
-      if (timeseriesError) {
-        console.error('[Impact] Error loading impact timeseries:', timeseriesError);
-        setAllKpis([]);
-        setIsLoading(false);
-        return;
-      }
-
-      // Step 3: Join data and create KPI cards
-      const kpiMap = new Map<string, ImpactKpiData>();
-      
-      ((timeseriesData as any) || []).forEach((ts: any) => {
-        const meta = (kpiMeta || []).find((m: any) => m.kpi_key === ts.kpi_key);
-        if (meta && !kpiMap.has(ts.kpi_key)) {
-          kpiMap.set(ts.kpi_key, {
-            kpi_key: ts.kpi_key,
-            name: meta.name,
-            unit: meta.unit,
-            variant: meta.variant,
-            dashboard: meta.dashboard,
-            impact_value: Number(ts.value) || 0,
-          });
+        if (myError) {
+          console.error('[Impact] Error loading user summaries:', myError);
+          setAllKpis([]);
+          setIsLoading(false);
+          return;
         }
-      });
 
-      // Convert to array and sort by impact value (descending)
-      const kpiList = Array.from(kpiMap.values()).sort((a, b) => b.impact_value - a.impact_value);
-      
-      setAllKpis(kpiList);
+        // Join registry with summaries
+        const myByKey = new Map(
+          (mySummaries || []).map((row: any) => [row.kpi_key, row])
+        );
+
+        const cards = (registry || [])
+          .map((card: any) => {
+            const summary = myByKey.get(card.kpi_key);
+            if (!summary) return null;
+            return {
+              ...card,
+              impact_value: Number(summary.impact_value) || 0,
+              impact_unit: summary.impact_unit,
+              impact_summary: summary.impact_summary,
+            };
+          })
+          .filter(Boolean) as ImpactKpiData[];
+
+        setAllKpis(cards);
+      }
     } catch (error: any) {
       console.error('[Impact] Error fetching KPIs:', error);
       setAllKpis([]);
@@ -186,10 +201,13 @@ export default function Impact() {
                     key={kpi.kpi_key}
                     kpi_key={kpi.kpi_key}
                     name={kpi.name}
-                    variant={kpi.variant}
-                    dashboard={kpi.dashboard}
                     unit={kpi.unit}
                     impact_value={kpi.impact_value}
+                    impact_unit={kpi.impact_unit}
+                    impact_summary={kpi.impact_summary}
+                    product_sources={kpi.product_sources}
+                    action_title={kpi.action_title}
+                    action_cta_label={kpi.action_cta_label}
                     context={activeTab}
                   />
                 ))}
