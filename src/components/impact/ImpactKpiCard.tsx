@@ -7,27 +7,24 @@ interface ImpactKpiCardProps {
   kpi_key: string;
   name: string;
   unit?: string;
+  chart_variant?: string;
   impact_value: number;
-  impact_unit?: string;
-  impact_summary?: string;
   product_sources?: string[];
-  action_title?: string;
-  action_cta_label?: string;
   context: ImpactContext;
 }
 
 export function ImpactKpiCard({
-  kpi_key,
   name,
   unit,
+  chart_variant,
   impact_value,
-  impact_unit,
-  impact_summary,
   product_sources,
-  action_title,
-  action_cta_label,
   context,
 }: ImpactKpiCardProps) {
+  // Generate a generic impact summary
+  const impactSummary = `In the selected period, AVIR ${
+    context === 'my' ? 'contributed to your' : 'achieved'
+  } impact of ${impact_value.toFixed(2)}${unit ? ` ${unit}` : ''} on "${name}".`;
 
   return (
     <Card className="p-5 hover:shadow-lg transition-all">
@@ -35,9 +32,16 @@ export function ImpactKpiCard({
         {/* Header */}
         <div className="space-y-2">
           <div className="flex items-start justify-between gap-2">
-            <h4 className="text-base font-semibold leading-tight flex-1">
-              {name}
-            </h4>
+            <div className="flex-1">
+              <h4 className="text-base font-semibold leading-tight">
+                {name}
+              </h4>
+              {chart_variant && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Type: {chart_variant}
+                </p>
+              )}
+            </div>
             {product_sources && product_sources.length > 0 && (
               <div className="flex gap-1 flex-wrap shrink-0">
                 {product_sources.map((source) => (
@@ -58,19 +62,11 @@ export function ImpactKpiCard({
             </span>
           </div>
           <div className="text-2xl font-bold text-foreground">
-            {impact_value.toFixed(2)} {impact_unit || unit || ''}
+            {impact_value.toFixed(2)} {unit || ''}
           </div>
-          {impact_summary && (
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {impact_summary}
-            </p>
-          )}
-          {action_title && action_cta_label && (
-            <div className="pt-2 border-t">
-              <p className="text-xs font-medium text-foreground mb-1">{action_title}</p>
-              <p className="text-xs text-muted-foreground">{action_cta_label}</p>
-            </div>
-          )}
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {impactSummary}
+          </p>
         </div>
       </div>
     </Card>

@@ -13,27 +13,33 @@ type ImpactContext = 'my' | 'overall';
 
 interface RegistryCard {
   kpi_key: string;
+  dashboard: string;
   name: string;
   unit?: string;
+  chart_variant?: string;
   product_sources?: string[];
-  action_title?: string;
-  action_cta_label?: string;
+  time_variants?: string[];
+}
+
+interface ImpactTimeseriesRow {
+  kpi_key: string;
+  value: number;
+  bucket: string;
+  ts: string;
 }
 
 interface ImpactKpiData extends RegistryCard {
   impact_value: number;
-  impact_unit?: string;
-  impact_summary?: string;
 }
 
-// Map periods to stored period values
-const PERIOD_TO_DB: Record<KpiRange, string> = {
-  '1D': '1d',
-  '1W': '7d',
-  '2W': '14d',
+// Map UI periods to bucket values in impact_timeseries
+const PERIOD_TO_BUCKET: Record<KpiRange, string> = {
+  '1D': '1D',
+  '1W': '1W',
+  '2W': '2W',
   '1M': '30d',
-  '6M': '6m',
-  '1Y': '1y',
+  '6M': '6M',
+  '1Y': '1Y',
 };
 
 export default function Impact() {
@@ -41,120 +47,153 @@ export default function Impact() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ImpactContext>('my');
   const [selectedPeriod, setSelectedPeriod] = useState<KpiRange>('1M');
-  const [allKpis, setAllKpis] = useState<ImpactKpiData[]>([]);
+  const [myImpactCards, setMyImpactCards] = useState<ImpactKpiData[]>([]);
+  const [overallImpactCards, setOverallImpactCards] = useState<ImpactKpiData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [myPage, setMyPage] = useState(1);
+  const [overallPage, setOverallPage] = useState(1);
   const PAGE_SIZE = 10;
 
-  // Reset to page 1 when switching tabs or period
+  // Reset to page 1 when switching period
   useEffect(() => {
-    setCurrentPage(1);
-  }, [activeTab, selectedPeriod]);
+    if (activeTab === 'my') {
+      setMyPage(1);
+    } else {
+      setOverallPage(1);
+    }
+  }, [selectedPeriod]);
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
-    fetchKpis();
-  }, [activeTab, selectedPeriod, user]);
+    if (user) {
+      fetchImpactData();
+    }
+  }, [selectedPeriod, user]);
 
-  const fetchKpis = async () => {
+  const fetchImpactData = async () => {
+    if (!user) return;
+    
     setIsLoading(true);
     try {
-      // Step 1: Load registry
+      // Step 1: Load registry metadata
       const { data: registry, error: registryError } = await supabase
         .from('v_impact_card_registry' as any)
-        .select('kpi_key, name, unit, product_sources, action_title, action_cta_label')
+        .select('kpi_key, dashboard, name, unit, chart_variant, product_sources, time_variants')
         .order('name', { ascending: true });
 
       if (registryError) {
-        console.error('[Impact] Error loading card registry:', registryError);
-        setAllKpis([]);
+        console.error('[Impact] Registry error:', registryError);
+        setMyImpactCards([]);
+        setOverallImpactCards([]);
         setIsLoading(false);
         return;
       }
 
-      const period = PERIOD_TO_DB[selectedPeriod];
+      const bucket = PERIOD_TO_BUCKET[selectedPeriod];
 
-      // Step 2: Load impact summaries based on active tab
-      if (activeTab === 'overall') {
-        const { data: overallSummaries, error: overallError } = await supabase
-          .from('impact_summaries_overall' as any)
-          .select('kpi_key, period, impact_value, impact_unit, impact_summary')
-          .eq('period', period);
+      // Step 2: Fetch My Impact data
+      const { data: myData, error: myError } = await supabase
+        .from('impact_timeseries' as any)
+        .select('kpi_key, value, bucket, ts')
+        .eq('context', 'my')
+        .eq('user_id', user.id)
+        .eq('series', 'impact')
+        .eq('bucket', bucket)
+        .order('kpi_key', { ascending: true })
+        .order('ts', { ascending: false });
 
-        if (overallError) {
-          console.error('[Impact] Error loading overall summaries:', overallError);
-          setAllKpis([]);
-          setIsLoading(false);
-          return;
-        }
-
-        // Join registry with summaries
-        const overallByKey = new Map(
-          (overallSummaries || []).map((row: any) => [row.kpi_key, row])
-        );
-
-        const cards = (registry || [])
-          .map((card: any) => {
-            const summary = overallByKey.get(card.kpi_key);
-            if (!summary) return null;
-            return {
-              ...card,
-              impact_value: Number(summary.impact_value) || 0,
-              impact_unit: summary.impact_unit,
-              impact_summary: summary.impact_summary,
-            };
-          })
-          .filter(Boolean) as ImpactKpiData[];
-
-        setAllKpis(cards);
-      } else {
-        // My Impact tab
-        if (!user) {
-          console.warn('[Impact] No authenticated user for My Impact');
-          setAllKpis([]);
-          setIsLoading(false);
-          return;
-        }
-
-        const { data: mySummaries, error: myError } = await supabase
-          .from('impact_summaries_user' as any)
-          .select('kpi_key, period, impact_value, impact_unit, impact_summary')
-          .eq('user_id', user.id)
-          .eq('period', period);
-
-        if (myError) {
-          console.error('[Impact] Error loading user summaries:', myError);
-          setAllKpis([]);
-          setIsLoading(false);
-          return;
-        }
-
-        // Join registry with summaries
-        const myByKey = new Map(
-          (mySummaries || []).map((row: any) => [row.kpi_key, row])
-        );
-
-        const cards = (registry || [])
-          .map((card: any) => {
-            const summary = myByKey.get(card.kpi_key);
-            if (!summary) return null;
-            return {
-              ...card,
-              impact_value: Number(summary.impact_value) || 0,
-              impact_unit: summary.impact_unit,
-              impact_summary: summary.impact_summary,
-            };
-          })
-          .filter(Boolean) as ImpactKpiData[];
-
-        setAllKpis(cards);
+      if (myError) {
+        console.error('[Impact] My data error:', myError);
       }
+
+      // Step 3: Fetch Overall Impact data
+      const { data: overallData, error: overallError } = await supabase
+        .from('impact_timeseries' as any)
+        .select('kpi_key, value, bucket, ts')
+        .eq('context', 'overall')
+        .eq('series', 'impact')
+        .eq('bucket', bucket)
+        .order('kpi_key', { ascending: true })
+        .order('ts', { ascending: false });
+
+      if (overallError) {
+        console.error('[Impact] Overall data error:', overallError);
+      }
+
+      // Step 4: Build maps - latest value per kpi_key
+      const myImpactByKpi = new Map<string, number>();
+      if (myData && Array.isArray(myData)) {
+        myData.forEach((row: any) => {
+          if (row && row.kpi_key && !myImpactByKpi.has(row.kpi_key)) {
+            myImpactByKpi.set(row.kpi_key, Number(row.value));
+          }
+        });
+      }
+
+      const overallImpactByKpi = new Map<string, number>();
+      if (overallData && Array.isArray(overallData)) {
+        overallData.forEach((row: any) => {
+          if (row && row.kpi_key && !overallImpactByKpi.has(row.kpi_key)) {
+            overallImpactByKpi.set(row.kpi_key, Number(row.value));
+          }
+        });
+      }
+
+      console.log('[Impact] Cards in registry:', registry?.length || 0);
+      console.log('[Impact] My impact KPIs with data:', myImpactByKpi.size);
+      console.log('[Impact] Overall impact KPIs with data:', overallImpactByKpi.size);
+
+      // Step 5: Join and filter - only show cards with data
+      const myCards: ImpactKpiData[] = [];
+      if (registry && Array.isArray(registry)) {
+        registry.forEach((card: any) => {
+          if (card && card.kpi_key && myImpactByKpi.has(card.kpi_key)) {
+            myCards.push({
+              ...card,
+              impact_value: myImpactByKpi.get(card.kpi_key)!,
+            });
+          }
+        });
+      }
+
+      const overallCards: ImpactKpiData[] = [];
+      if (registry && Array.isArray(registry)) {
+        registry.forEach((card: any) => {
+          if (card && card.kpi_key && overallImpactByKpi.has(card.kpi_key)) {
+            overallCards.push({
+              ...card,
+              impact_value: overallImpactByKpi.get(card.kpi_key)!,
+            });
+          }
+        });
+      }
+
+      setMyImpactCards(myCards);
+      setOverallImpactCards(overallCards);
     } catch (error: any) {
-      console.error('[Impact] Error fetching KPIs:', error);
-      setAllKpis([]);
+      console.error('[Impact] Fetch error:', error);
+      setMyImpactCards([]);
+      setOverallImpactCards([]);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const currentCards = activeTab === 'my' ? myImpactCards : overallImpactCards;
+  const currentPage = activeTab === 'my' ? myPage : overallPage;
+  const setCurrentPage = activeTab === 'my' ? setMyPage : setOverallPage;
+  
+  const totalPages = Math.ceil(currentCards.length / PAGE_SIZE);
+  const paginatedCards = currentCards.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
   return (
     <div className="p-6 space-y-6 animate-fade-in">
@@ -174,63 +213,105 @@ export default function Impact() {
           <RangeChips selected={selectedPeriod} onChange={setSelectedPeriod} />
         </div>
 
-        <TabsContent value={activeTab} className="space-y-6 mt-6">
+        <TabsContent value="my" className="space-y-6 mt-6">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="animate-spin mr-2 h-8 w-8" />
               <span className="text-muted-foreground">Loading impact data...</span>
             </div>
-          ) : activeTab === 'my' && !user ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">Sign in to see your personalized impact</p>
-              <Button onClick={() => navigate('/login')}>Sign In</Button>
-            </div>
-          ) : activeTab === 'my' && allKpis.length === 0 ? (
+          ) : myImpactCards.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              No personalized impact data available for your account yet.
+              No personalized impact data available for your account in this period. Try selecting a wider time range.
             </div>
-          ) : activeTab === 'overall' && allKpis.length === 0 ? (
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {paginatedCards.map((kpi) => (
+                  <ImpactKpiCard
+                    key={kpi.kpi_key}
+                    kpi_key={kpi.kpi_key}
+                    name={kpi.name}
+                    unit={kpi.unit}
+                    chart_variant={kpi.chart_variant}
+                    impact_value={kpi.impact_value}
+                    product_sources={kpi.product_sources}
+                    context="my"
+                  />
+                ))}
+              </div>
+              
+              {myImpactCards.length > PAGE_SIZE && (
+                <div className="flex items-center justify-center gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMyPage(p => Math.max(1, p - 1))}
+                    disabled={myPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground px-4">
+                    Page {myPage} of {Math.ceil(myImpactCards.length / PAGE_SIZE)}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMyPage(p => Math.min(Math.ceil(myImpactCards.length / PAGE_SIZE), p + 1))}
+                    disabled={myPage === Math.ceil(myImpactCards.length / PAGE_SIZE)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="overall" className="space-y-6 mt-6">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="animate-spin mr-2 h-8 w-8" />
+              <span className="text-muted-foreground">Loading impact data...</span>
+            </div>
+          ) : overallImpactCards.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               No measurable impact available for this period. Connect data sources or extend your activity window.
             </div>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {allKpis.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((kpi) => (
+                {paginatedCards.map((kpi) => (
                   <ImpactKpiCard
                     key={kpi.kpi_key}
                     kpi_key={kpi.kpi_key}
                     name={kpi.name}
                     unit={kpi.unit}
+                    chart_variant={kpi.chart_variant}
                     impact_value={kpi.impact_value}
-                    impact_unit={kpi.impact_unit}
-                    impact_summary={kpi.impact_summary}
                     product_sources={kpi.product_sources}
-                    action_title={kpi.action_title}
-                    action_cta_label={kpi.action_cta_label}
-                    context={activeTab}
+                    context="overall"
                   />
                 ))}
               </div>
               
-              {allKpis.length > PAGE_SIZE && (
+              {overallImpactCards.length > PAGE_SIZE && (
                 <div className="flex items-center justify-center gap-2 pt-4">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
+                    onClick={() => setOverallPage(p => Math.max(1, p - 1))}
+                    disabled={overallPage === 1}
                   >
                     Previous
                   </Button>
                   <span className="text-sm text-muted-foreground px-4">
-                    Page {currentPage} of {Math.ceil(allKpis.length / PAGE_SIZE)}
+                    Page {overallPage} of {Math.ceil(overallImpactCards.length / PAGE_SIZE)}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(allKpis.length / PAGE_SIZE), p + 1))}
-                    disabled={currentPage === Math.ceil(allKpis.length / PAGE_SIZE)}
+                    onClick={() => setOverallPage(p => Math.min(Math.ceil(overallImpactCards.length / PAGE_SIZE), p + 1))}
+                    disabled={overallPage === Math.ceil(overallImpactCards.length / PAGE_SIZE)}
                   >
                     Next
                   </Button>
