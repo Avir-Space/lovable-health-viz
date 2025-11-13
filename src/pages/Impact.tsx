@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { KpiRange } from '@/hooks/useKpiData';
 import { useImpactData } from '@/hooks/useImpactData';
+import { useImpactOverall } from '@/hooks/useImpactOverall';
 
 type ImpactContext = 'my' | 'overall';
 
@@ -20,11 +21,28 @@ export default function Impact() {
   const [overallPage, setOverallPage] = useState(1);
   const PAGE_SIZE = 10;
 
-  // Use the robust impact data hook
-  const { myImpactCards, overallImpactCards, isLoading } = useImpactData(
+  // Map KpiRange to bucket for the new hook
+  const bucketMap: Record<KpiRange, string> = {
+    '1D': '1D',
+    '1W': '1W',
+    '2W': '2W',
+    '1M': '30d',
+    '6M': '6M',
+    '1Y': '1Y',
+  };
+
+  // Use the new focused Impact Overall hook (only 3 KPIs, no breaking changes)
+  const { kpis: overallKpis, isLoading: overallLoading } = useImpactOverall(
+    bucketMap[selectedPeriod]
+  );
+
+  // Keep My Impact using the existing hook for now
+  const { myImpactCards, isLoading: myLoading } = useImpactData(
     selectedPeriod,
     user?.id
   );
+
+  const isLoading = activeTab === 'my' ? myLoading : overallLoading;
 
   // Reset to page 1 when switching period
   useEffect(() => {
@@ -42,12 +60,19 @@ export default function Impact() {
     }
   }, [user, navigate]);
 
-  const currentCards = activeTab === 'my' ? myImpactCards : overallImpactCards;
+  const currentCards = activeTab === 'my' ? myImpactCards : overallKpis;
   const currentPage = activeTab === 'my' ? myPage : overallPage;
   const paginatedCards = currentCards.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   );
+
+  // Map names for the 3 Impact KPIs
+  const kpiNames: Record<string, string> = {
+    'impact:aog_minutes_avoided': 'AOG Minutes Avoided',
+    'impact:fuel_saved_kg': 'Fuel Saved (kg)',
+    'impact:cost_saved_usd': 'Cost Saved (USD)',
+  };
 
   return (
     <div className="p-6 space-y-6 animate-fade-in">
@@ -130,31 +155,32 @@ export default function Impact() {
               <Loader2 className="animate-spin mr-2 h-8 w-8" />
               <span className="text-muted-foreground">Loading impact data...</span>
             </div>
-          ) : overallImpactCards.length === 0 ? (
+          ) : overallKpis.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               No measurable impact available for this period. Connect data sources or extend your activity window.
             </div>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {paginatedCards.map((kpi) => (
-                  <ImpactKpiCard
-                    key={kpi.kpi_key}
-                    kpi_key={kpi.kpi_key}
-                    name={kpi.name}
-                    unit={kpi.unit}
-                    chart_variant={kpi.chart_variant}
-                    impact_value={kpi.impact_value}
-                    impact_unit={kpi.impact_unit}
-                    summary={kpi.summary}
-                    confidence_pct={kpi.confidence_pct}
-                    product_sources={kpi.product_sources}
-                    context="overall"
-                  />
-                ))}
+                {paginatedCards.map((kpi) => {
+                  // Calculate latest value from timeseries
+                  const latestValue = kpi.timeseries.length > 0 
+                    ? kpi.timeseries[kpi.timeseries.length - 1].value 
+                    : 0;
+
+                  return (
+                    <ImpactKpiCard
+                      key={kpi.kpi_key}
+                      kpi_key={kpi.kpi_key}
+                      name={kpiNames[kpi.kpi_key] || kpi.kpi_key}
+                      impact_value={latestValue}
+                      context="overall"
+                    />
+                  );
+                })}
               </div>
               
-              {overallImpactCards.length > PAGE_SIZE && (
+              {overallKpis.length > PAGE_SIZE && (
                 <div className="flex items-center justify-center gap-2 pt-4">
                   <Button
                     variant="outline"
@@ -165,13 +191,13 @@ export default function Impact() {
                     Previous
                   </Button>
                   <span className="text-sm text-muted-foreground px-4">
-                    Page {overallPage} of {Math.ceil(overallImpactCards.length / PAGE_SIZE)}
+                    Page {overallPage} of {Math.ceil(overallKpis.length / PAGE_SIZE)}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setOverallPage(p => Math.min(Math.ceil(overallImpactCards.length / PAGE_SIZE), p + 1))}
-                    disabled={overallPage === Math.ceil(overallImpactCards.length / PAGE_SIZE)}
+                    onClick={() => setOverallPage(p => Math.min(Math.ceil(overallKpis.length / PAGE_SIZE), p + 1))}
+                    disabled={overallPage === Math.ceil(overallKpis.length / PAGE_SIZE)}
                   >
                     Next
                   </Button>
