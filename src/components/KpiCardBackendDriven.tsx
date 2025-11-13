@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Loader2, RefreshCw, Sparkles, X } from 'lucide-react';
+import { Loader2, RefreshCw, Sparkles, X, Pin, PinOff } from 'lucide-react';
 import { KpiRange, KpiVariant, useKpiData } from '@/hooks/useKpiData';
 import { useKpiAction } from '@/hooks/useKpiAction';
 import { Card } from './ui/card';
@@ -18,6 +18,7 @@ import Heatmap from './charts/HeatmapChart';
 import NumericChart from './charts/NumericChart';
 import TableGrid from './TableGrid';
 import { KpiSourcePills } from './KpiSourcePills';
+import { usePinnedKpis } from '@/hooks/usePinnedKpis';
 
 const TIME_SERIES: KpiVariant[] = ['line', 'numeric', 'gauge'];
 
@@ -30,6 +31,7 @@ export default function KpiCardBackendDriven({
   useLiveData = true,
   dashboard,
   onKpiAction,
+  showPin = true,
 }: {
   kpi_key: string;
   name: string;
@@ -39,10 +41,13 @@ export default function KpiCardBackendDriven({
   useLiveData?: boolean;
   dashboard?: string;
   onKpiAction?: (kpi_key: string) => void;
+  showPin?: boolean;
 }) {
   const [range, setRange] = useState<KpiRange>(defaultRange);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { toast } = useToast();
+  const { isPinned, pin, unpin } = usePinnedKpis();
+  const pinned = showPin ? isPinned(kpi_key) : false;
   const { payload, isLoading, isValidating, error, refresh } = useKpiData(
     kpi_key,
     variant,
@@ -78,6 +83,16 @@ export default function KpiCardBackendDriven({
         title: "Sync failed", 
         description: e?.message ?? "Please check RPC/logs." 
       });
+    }
+  };
+
+  const handlePinToggle = async () => {
+    if (!dashboard) return;
+    
+    if (pinned) {
+      await unpin(kpi_key, dashboard);
+    } else {
+      await pin(kpi_key, dashboard);
     }
   };
 
@@ -167,22 +182,48 @@ export default function KpiCardBackendDriven({
             {showRanges && (
               <RangeChips selected={range} onChange={setRange} />
             )}
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleSync}
-              disabled={isValidating}
-              className="h-7 px-2 text-[11px] gap-1.5 ml-auto"
-              aria-label="Sync now"
-              title="Sync now"
-            >
-              {isValidating ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <RefreshCw className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-1 ml-auto">
+              {showPin && dashboard && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handlePinToggle}
+                        className="h-7 w-7 p-0"
+                        aria-label={pinned ? 'Unpin KPI' : 'Pin KPI'}
+                      >
+                        {pinned ? (
+                          <PinOff className="h-3.5 w-3.5" />
+                        ) : (
+                          <Pin className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {pinned ? 'Unpin this KPI' : 'Pin this KPI'}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
-              Sync
-            </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSync}
+                disabled={isValidating}
+                className="h-7 px-2 text-[11px] gap-1.5"
+                aria-label="Sync now"
+                title="Sync now"
+              >
+                {isValidating ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" />
+                )}
+                Sync
+              </Button>
+            </div>
           </div>
         </div>
 

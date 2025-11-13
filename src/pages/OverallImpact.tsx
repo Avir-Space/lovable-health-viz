@@ -1,12 +1,29 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useImpactOverall } from '@/hooks/useImpactOverall';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Pin, PinOff } from 'lucide-react';
 import EChart from '@/components/charts/EChart';
 import { fmt } from '@/lib/num';
+import { usePinnedKpis } from '@/hooks/usePinnedKpis';
+import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 
 export default function OverallImpact() {
   const { kpis, isLoading, error } = useImpactOverall('30d');
+  const { isPinned, pin, unpin } = usePinnedKpis();
+
+  const handlePinToggle = async (kpi_key: string) => {
+    if (isPinned(kpi_key)) {
+      await unpin(kpi_key, 'overall-impact');
+    } else {
+      await pin(kpi_key, 'overall-impact');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -92,15 +109,42 @@ export default function OverallImpact() {
               },
             };
 
+            const pinned = isPinned(kpi.kpi_key);
+            
             return (
-              <Card key={kpi.kpi_key} className="overflow-hidden">
+              <Card key={kpi.kpi_key} className="overflow-hidden relative">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">{kpi.label}</CardTitle>
-                  <div className="text-3xl font-bold text-primary">
-                    {fmt(latestValue)}
-                    <span className="text-sm font-normal text-muted-foreground ml-2">
-                      {kpi.unit}
-                    </span>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{kpi.label}</CardTitle>
+                      <div className="text-3xl font-bold text-primary mt-2">
+                        {fmt(latestValue)}
+                        <span className="text-sm font-normal text-muted-foreground ml-2">
+                          {kpi.unit}
+                        </span>
+                      </div>
+                    </div>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handlePinToggle(kpi.kpi_key)}
+                          >
+                            {pinned ? (
+                              <PinOff className="h-4 w-4" />
+                            ) : (
+                              <Pin className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {pinned ? 'Unpin this KPI' : 'Pin this KPI'}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </CardHeader>
                 <CardContent>
