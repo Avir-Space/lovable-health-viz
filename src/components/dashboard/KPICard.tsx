@@ -4,7 +4,14 @@ import { SourceBadge } from "./SourceBadge";
 import { RefreshButton } from "./RefreshButton";
 import { ExplainabilityDrawer } from "./ExplainabilityDrawer";
 import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Pin, PinOff } from "lucide-react";
+import { usePinnedKpis } from "@/hooks/usePinnedKpis";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface KPICardProps {
   title: string;
@@ -13,9 +20,35 @@ interface KPICardProps {
   onRefresh?: () => void;
   aiSuggestion?: string;
   aiAction?: string;
+  showPin?: boolean;
+  kpiKey?: string;
+  sourceDashboard?: string;
 }
 
-export function KPICard({ title, sources = ["AMOS"], children, onRefresh, aiSuggestion, aiAction }: KPICardProps) {
+export function KPICard({ 
+  title, 
+  sources = ["AMOS"], 
+  children, 
+  onRefresh, 
+  aiSuggestion, 
+  aiAction,
+  showPin = false,
+  kpiKey,
+  sourceDashboard,
+}: KPICardProps) {
+  const { isPinned, pin, unpin } = usePinnedKpis();
+  const pinned = kpiKey ? isPinned(kpiKey) : false;
+
+  const handlePinToggle = async () => {
+    if (!kpiKey || !sourceDashboard) return;
+    
+    if (pinned) {
+      await unpin(kpiKey, sourceDashboard);
+    } else {
+      await pin(kpiKey, sourceDashboard);
+    }
+  };
+
   return (
     <Card className="flex flex-col animate-fade-in hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">
       <CardHeader className="pb-3">
@@ -32,6 +65,29 @@ export function KPICard({ title, sources = ["AMOS"], children, onRefresh, aiSugg
           <div className="flex items-center gap-1">
             <ExplainabilityDrawer kpiName={title} />
             <RefreshButton onRefresh={onRefresh} />
+            {showPin && kpiKey && sourceDashboard && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={handlePinToggle}
+                    >
+                      {pinned ? (
+                        <PinOff className="h-4 w-4" />
+                      ) : (
+                        <Pin className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {pinned ? 'Unpin this KPI' : 'Pin this KPI'}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
         </div>
       </CardHeader>
