@@ -16,7 +16,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 
 const navItems = [
   { title: "My Dashboard", url: "/my-dashboard", icon: Home },
-  { title: "Impact", url: "/impact", icon: TrendingUp },
+  { title: "Overall Impact", url: "/overall-impact", icon: TrendingUp },
 ];
 
 const predefinedDashboards = [

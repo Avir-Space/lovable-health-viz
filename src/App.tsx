@@ -10,7 +10,7 @@ import Login from "./pages/Login";
 import AuthCallback from "./pages/AuthCallback";
 import Index from "./pages/Index";
 import MyDashboard from "./pages/MyDashboard";
-import Impact from "./pages/Impact";
+import OverallImpact from "./pages/OverallImpact";
 import Settings from "./pages/Settings";
 import Admin from "./pages/Admin";
 import MaintenanceHealthOverview from "./pages/dashboards/MaintenanceHealthOverview";
@@ -42,7 +42,7 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/my-dashboard" element={<MyDashboard />} />
-                    <Route path="/impact" element={<Impact />} />
+                    <Route path="/overall-impact" element={<OverallImpact />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="/admin" element={<Admin />} />
                     <Route path="/dashboards/maintenance-health-overview" element={<MaintenanceHealthOverview />} />
