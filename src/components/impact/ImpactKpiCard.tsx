@@ -9,6 +9,9 @@ interface ImpactKpiCardProps {
   unit?: string;
   chart_variant?: string;
   impact_value: number;
+  impact_unit?: string;
+  summary?: string;
+  confidence_pct?: number;
   product_sources?: string[];
   context: ImpactContext;
 }
@@ -18,13 +21,20 @@ export function ImpactKpiCard({
   unit,
   chart_variant,
   impact_value,
+  impact_unit,
+  summary,
+  confidence_pct,
   product_sources,
   context,
 }: ImpactKpiCardProps) {
-  // Generate a generic impact summary
-  const impactSummary = `In the selected period, AVIR ${
-    context === 'my' ? 'contributed to your' : 'achieved'
-  } impact of ${impact_value.toFixed(2)}${unit ? ` ${unit}` : ''} on "${name}".`;
+  // Use provided summary or generate a generic one
+  const displaySummary = summary || 
+    `In the selected period, AVIR ${
+      context === 'my' ? 'contributed to your' : 'achieved'
+    } impact of ${impact_value.toFixed(2)}${impact_unit || unit ? ` ${impact_unit || unit}` : ''} on "${name}".`;
+
+  // Use impact_unit if available, otherwise fall back to unit
+  const displayUnit = impact_unit || unit || '';
 
   return (
     <Card className="p-5 hover:shadow-lg transition-all">
@@ -36,11 +46,18 @@ export function ImpactKpiCard({
               <h4 className="text-base font-semibold leading-tight">
                 {name}
               </h4>
-              {chart_variant && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Type: {chart_variant}
-                </p>
-              )}
+              <div className="flex items-center gap-2 mt-1">
+                {chart_variant && (
+                  <p className="text-xs text-muted-foreground">
+                    Type: {chart_variant}
+                  </p>
+                )}
+                {confidence_pct !== undefined && confidence_pct !== null && (
+                  <Badge variant="secondary" className="text-xs">
+                    {confidence_pct}% confidence
+                  </Badge>
+                )}
+              </div>
             </div>
             {product_sources && product_sources.length > 0 && (
               <div className="flex gap-1 flex-wrap shrink-0">
@@ -62,11 +79,13 @@ export function ImpactKpiCard({
             </span>
           </div>
           <div className="text-2xl font-bold text-foreground">
-            {impact_value.toFixed(2)} {unit || ''}
+            {impact_value.toFixed(2)} {displayUnit}
           </div>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {impactSummary}
-          </p>
+          {displaySummary && (
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {displaySummary}
+            </p>
+          )}
         </div>
       </div>
     </Card>
