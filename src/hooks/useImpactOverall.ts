@@ -1,11 +1,40 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-const TARGET_KPIS = [
-  'impact:aog_minutes_avoided',
-  'impact:fuel_saved_kg',
-  'impact:cost_saved_usd',
-];
+const IMPACT_META: Record<string, { label: string; unit: string }> = {
+  'impact:aog_minutes_avoided': {
+    label: 'AOG Minutes Avoided',
+    unit: 'minutes',
+  },
+  'impact:fuel_saved_kg': {
+    label: 'Fuel Saved',
+    unit: 'kg',
+  },
+  'impact:cost_saved_usd': {
+    label: 'Cost Saved',
+    unit: 'USD',
+  },
+  'impact:tech_delay_minutes': {
+    label: 'Tech Delay Minutes',
+    unit: 'minutes',
+  },
+  'impact:non_tech_delay_minutes': {
+    label: 'Non-tech Delay Minutes',
+    unit: 'minutes',
+  },
+  'impact:grounded_due_to_spares': {
+    label: 'Grounded due to Spares',
+    unit: 'aircraft',
+  },
+  'impact:crew_overtime_hours': {
+    label: 'Crew Overtime Hours',
+    unit: 'hours',
+  },
+  'impact:warranty_recovery_rate': {
+    label: 'Warranty Recovery Rate',
+    unit: '%',
+  },
+};
 
 interface ImpactTimeseriesRow {
   kpi_key: string;
@@ -17,7 +46,10 @@ interface ImpactTimeseriesRow {
 
 export interface ImpactOverallKpi {
   kpi_key: string;
+  label: string;
+  unit: string;
   timeseries: Array<{ ts: string; value: number }>;
+  latestValue?: number;
 }
 
 interface UseImpactOverallResult {
@@ -40,12 +72,11 @@ export function useImpactOverall(selectedBucket: string = '30d'): UseImpactOvera
       setIsLoading(true);
       setError(null);
 
-      // Query v_impact_overall_timeseries for our 3 target KPIs
+      // Query v_impact_overall_timeseries for all KPIs
       // Cast to any because this is a view not in generated types
       const { data, error: queryError } = await (supabase as any)
         .from('v_impact_overall_timeseries')
         .select('kpi_key, ts, bucket, series, value')
-        .in('kpi_key', TARGET_KPIS)
         .eq('bucket', selectedBucket)
         .eq('series', 'impact')
         .order('ts', { ascending: true }) as { data: ImpactTimeseriesRow[] | null; error: any };
@@ -83,16 +114,26 @@ export function useImpactOverall(selectedBucket: string = '30d'): UseImpactOvera
         grouped.get(row.kpi_key)!.push(row);
       });
 
-      // Convert to our result format, only including KPIs with data
-      const result: ImpactOverallKpi[] = TARGET_KPIS
-        .filter((kpi_key) => grouped.has(kpi_key) && grouped.get(kpi_key)!.length > 0)
-        .map((kpi_key) => ({
-          kpi_key,
-          timeseries: grouped.get(kpi_key)!.map((row) => ({
+      // Convert to our result format, only including KPIs that are in our metadata map
+      const result: ImpactOverallKpi[] = Array.from(grouped.keys())
+        .filter((kpi_key) => IMPACT_META[kpi_key] && grouped.get(kpi_key)!.length > 0)
+        .map((kpi_key) => {
+          const rows = grouped.get(kpi_key)!;
+          const sortedRows = rows.sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
+          const timeseries = sortedRows.map((row) => ({
             ts: row.ts,
             value: row.value,
-          })),
-        }));
+          }));
+          const latestValue = sortedRows[sortedRows.length - 1]?.value;
+          
+          return {
+            kpi_key,
+            label: IMPACT_META[kpi_key].label,
+            unit: IMPACT_META[kpi_key].unit,
+            timeseries,
+            latestValue,
+          };
+        });
 
       setKpis(result);
       setIsLoading(false);

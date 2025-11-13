@@ -4,20 +4,6 @@ import { Loader2 } from 'lucide-react';
 import EChart from '@/components/charts/EChart';
 import { fmt } from '@/lib/num';
 
-const kpiConfig = {
-  'impact:aog_minutes_avoided': {
-    label: 'AOG Minutes Avoided',
-    unit: 'minutes',
-  },
-  'impact:fuel_saved_kg': {
-    label: 'Fuel Saved',
-    unit: 'kg',
-  },
-  'impact:cost_saved_usd': {
-    label: 'Cost Saved',
-    unit: 'USD',
-  },
-};
 
 export default function OverallImpact() {
   const { kpis, isLoading, error } = useImpactOverall('30d');
@@ -59,12 +45,7 @@ export default function OverallImpact() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {kpis.map((kpi) => {
-            const config = kpiConfig[kpi.kpi_key as keyof typeof kpiConfig];
-            if (!config) return null;
-
-            const latestValue = kpi.timeseries.length > 0
-              ? kpi.timeseries[kpi.timeseries.length - 1].value
-              : 0;
+            const latestValue = kpi.latestValue ?? 0;
 
             // Prepare chart data
             const chartOption = {
@@ -79,7 +60,7 @@ export default function OverallImpact() {
               },
               yAxis: {
                 type: 'value',
-                name: config.unit,
+                name: kpi.unit,
                 nameLocation: 'middle',
                 nameGap: 45,
                 axisLabel: {
@@ -106,7 +87,7 @@ export default function OverallImpact() {
                 trigger: 'axis',
                 formatter: (params: any) => {
                   const param = params[0];
-                  return `${param.axisValue}<br/>${fmt(param.value)} ${config.unit}`;
+                  return `${param.axisValue}<br/>${fmt(param.value)} ${kpi.unit}`;
                 },
               },
             };
@@ -114,11 +95,11 @@ export default function OverallImpact() {
             return (
               <Card key={kpi.kpi_key} className="overflow-hidden">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">{config.label}</CardTitle>
+                  <CardTitle className="text-lg">{kpi.label}</CardTitle>
                   <div className="text-3xl font-bold text-primary">
                     {fmt(latestValue)}
                     <span className="text-sm font-normal text-muted-foreground ml-2">
-                      {config.unit}
+                      {kpi.unit}
                     </span>
                   </div>
                 </CardHeader>
