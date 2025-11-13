@@ -121,27 +121,25 @@ export default function MyDashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Render regular KPIs */}
         {regularKpis.map((kpiMeta) => {
           const pin = pinnedList.find(p => p.kpi_key === kpiMeta.kpi_key);
           if (!pin) return null;
 
           return (
-            <div key={kpiMeta.kpi_key} className="relative">
-              <div className="absolute top-2 left-2 z-10">
-                <Badge variant="secondary" className="text-xs">
+            <div key={kpiMeta.kpi_key} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Badge variant="secondary" className="text-xs max-w-[60%] truncate">
                   From: {DASHBOARD_LABELS[pin.source_dashboard] || pin.source_dashboard}
                 </Badge>
-              </div>
-              <div className="absolute top-2 right-2 z-10">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 bg-background/80 backdrop-blur-sm"
+                        className="h-7 w-7"
                         onClick={() => handleUnpin(kpiMeta.kpi_key, pin.source_dashboard)}
                       >
                         <PinOff className="h-4 w-4" />
@@ -216,20 +214,18 @@ export default function MyDashboard() {
           };
 
           return (
-            <div key={impactKpi.kpi_key} className="relative">
-              <div className="absolute top-2 left-2 z-10">
-                <Badge variant="secondary" className="text-xs">
+            <div key={impactKpi.kpi_key} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Badge variant="secondary" className="text-xs max-w-[60%] truncate">
                   From: {DASHBOARD_LABELS[pin.source_dashboard] || pin.source_dashboard}
                 </Badge>
-              </div>
-              <div className="absolute top-2 right-2 z-10">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 bg-background/80 backdrop-blur-sm"
+                        className="h-7 w-7"
                         onClick={() => handleUnpin(impactKpi.kpi_key, pin.source_dashboard)}
                       >
                         <PinOff className="h-4 w-4" />
@@ -242,7 +238,7 @@ export default function MyDashboard() {
                 </TooltipProvider>
               </div>
               <Card className="overflow-hidden">
-                <CardHeader className="pb-3 pt-12">
+                <CardHeader className="pb-3">
                   <CardTitle className="text-lg">{impactKpi.label}</CardTitle>
                   <div className="text-3xl font-bold text-primary">
                     {fmt(latestValue)}
