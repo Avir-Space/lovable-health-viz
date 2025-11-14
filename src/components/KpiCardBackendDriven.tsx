@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Loader2, RefreshCw, Sparkles, X, Pin, PinOff } from 'lucide-react';
+import { Loader2, RefreshCw, Sparkles, X, Pin, PinOff, MoreVertical, Bell } from 'lucide-react';
 import { KpiRange, KpiVariant, useKpiData } from '@/hooks/useKpiData';
 import { useKpiAction } from '@/hooks/useKpiAction';
 import { Card } from './ui/card';
@@ -9,6 +9,7 @@ import { RangeChips } from './ui/range-chips';
 import { Alert, AlertDescription } from './ui/alert';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from './ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from './ui/sheet';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import LineChart from './charts/LineChart';
 import BarChart from './charts/BarChart';
@@ -19,6 +20,8 @@ import NumericChart from './charts/NumericChart';
 import TableGrid from './TableGrid';
 import { KpiSourcePills } from './KpiSourcePills';
 import { usePinnedKpis } from '@/hooks/usePinnedKpis';
+import { useKpiAlerts } from '@/hooks/useKpiAlerts';
+import { SetAlertModal } from './alerts/SetAlertModal';
 
 const TIME_SERIES: KpiVariant[] = ['line', 'numeric', 'gauge'];
 
@@ -45,6 +48,7 @@ export default function KpiCardBackendDriven({
 }) {
   const [range, setRange] = useState<KpiRange>(defaultRange);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   const { toast } = useToast();
   const { isPinned, pin, unpin } = usePinnedKpis();
   const pinned = showPin ? isPinned(kpi_key) : false;
@@ -55,7 +59,9 @@ export default function KpiCardBackendDriven({
     useLiveData
   );
   const { action } = useKpiAction(kpi_key);
+  const { rules, createAlert, updateAlert } = useKpiAlerts(kpi_key, dashboard || '');
   const showRanges = TIME_SERIES.includes(variant);
+  const existingAlert = rules.length > 0 ? rules[0] : undefined;
 
   const handleActionClick = () => {
     setIsDrawerOpen(true);
@@ -223,6 +229,28 @@ export default function KpiCardBackendDriven({
                 )}
                 Sync
               </Button>
+
+              {/* Actions Menu */}
+              {(TIME_SERIES.includes(variant) || variant === 'numeric') && dashboard && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0"
+                      aria-label="KPI Actions"
+                    >
+                      <MoreVertical className="h-3.5 w-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setIsAlertModalOpen(true)}>
+                      <Bell className="mr-2 h-4 w-4" />
+                      Alerts & Triggers
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </div>
         </div>
@@ -369,6 +397,19 @@ export default function KpiCardBackendDriven({
           </div>
         </div>
       </div>
+
+      {/* Alert Modal */}
+      <SetAlertModal
+        open={isAlertModalOpen}
+        onClose={() => setIsAlertModalOpen(false)}
+        kpiName={name}
+        kpiKey={kpi_key}
+        dashboardId={dashboard || ''}
+        unit={unit || undefined}
+        existingRule={existingAlert}
+        onSave={createAlert}
+        onUpdate={updateAlert}
+      />
     </Card>
   );
 }
