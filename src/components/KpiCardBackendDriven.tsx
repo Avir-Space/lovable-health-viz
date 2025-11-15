@@ -25,16 +25,6 @@ import { SetAlertModal } from './alerts/SetAlertModal';
 
 const TIME_SERIES: KpiVariant[] = ['line', 'numeric', 'gauge'];
 
-export type KpiOverrideStats = {
-  currentValue: number;
-  previousValue?: number;
-  unit?: string;
-  targetBand?: string;
-  aiSummaryText?: string;
-  aiCtaTitle?: string;
-  aiCtaLabel?: string;
-};
-
 export default function KpiCardBackendDriven({
   kpi_key,
   name,
@@ -45,7 +35,6 @@ export default function KpiCardBackendDriven({
   dashboard,
   onKpiAction,
   showPin = true,
-  overrideStats,
 }: {
   kpi_key: string;
   name: string;
@@ -56,7 +45,6 @@ export default function KpiCardBackendDriven({
   dashboard?: string;
   onKpiAction?: (kpi_key: string) => void;
   showPin?: boolean;
-  overrideStats?: KpiOverrideStats;
 }) {
   const [range, setRange] = useState<KpiRange>(defaultRange);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -147,13 +135,12 @@ export default function KpiCardBackendDriven({
           />
         );
       case 'gauge': {
-        const v = overrideStats?.currentValue ?? (p.latest?.value ?? (p.timeseries?.at(-1)?.value ?? 0));
-        const displayUnit = overrideStats?.unit ?? p.meta.unit ?? '%';
-        const maxVal = displayUnit === '%' ? 100 : Math.ceil((Number(v) || 0) * 1.2);
+        const v = p.latest?.value ?? (p.timeseries?.at(-1)?.value ?? 0);
+        const maxVal = p.meta.unit === '%' ? 100 : Math.ceil((Number(v) || 0) * 1.2);
         return (
           <GaugeChart
             value={Number(v) || 0}
-            unit={displayUnit}
+            unit={p.meta.unit || '%'}
             max={maxVal}
           />
         );
@@ -163,12 +150,11 @@ export default function KpiCardBackendDriven({
       case 'table':
         return <TableGrid rows={p.tableRows || []} />;
       case 'numeric': {
-        const v = overrideStats?.currentValue ?? (p.latest?.value ?? (p.timeseries?.at(-1)?.value ?? 0));
-        const displayUnit = overrideStats?.unit ?? p.meta.unit ?? '';
+        const v = p.latest?.value ?? (p.timeseries?.at(-1)?.value ?? 0);
         return (
           <NumericChart
             value={Number(v) || 0}
-            unit={displayUnit}
+            unit={p.meta.unit || ''}
             align="left"
           />
         );
@@ -289,7 +275,7 @@ export default function KpiCardBackendDriven({
 
         {/* Row 3: Footer */}
         <div className="space-y-2">
-          {(action || overrideStats?.aiCtaTitle) && (
+          {action && (
             <>
               <div 
                 className="border-t pt-1.5 flex flex-wrap justify-between items-start gap-3"
@@ -298,7 +284,7 @@ export default function KpiCardBackendDriven({
                 <div className="flex items-start gap-2 max-w-[70%] flex-1">
                   <Sparkles className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
                   <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-line break-words leading-relaxed font-medium">
-                    {overrideStats?.aiCtaTitle ?? action?.action_title}
+                    {action.action_title}
                   </p>
                 </div>
                 <Button
@@ -307,7 +293,7 @@ export default function KpiCardBackendDriven({
                   className="shrink-0"
                   aria-label="AI Action CTA"
                 >
-                  {overrideStats?.aiCtaLabel ?? action?.action_cta_label}
+                  {action.action_cta_label}
                 </Button>
               </div>
 

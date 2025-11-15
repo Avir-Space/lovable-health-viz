@@ -15,7 +15,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useComplianceBenchmarks } from "@/hooks/useComplianceBenchmarks";
 
 const DASHBOARD_LABELS: Record<string, string> = {
   'maintenance-health': 'Maintenance Health',
@@ -39,7 +38,6 @@ interface KpiMeta {
 export default function MyDashboard() {
   const { pinnedList, isLoading: pinsLoading, unpin } = usePinnedKpis();
   const { kpis: impactKpis, isLoading: impactLoading } = useImpactOverall('30d');
-  const { benchmarks } = useComplianceBenchmarks();
   const [regularKpis, setRegularKpis] = useState<KpiMeta[]>([]);
   const [isLoadingMeta, setIsLoadingMeta] = useState(true);
 
@@ -129,23 +127,6 @@ export default function MyDashboard() {
           const pin = pinnedList.find(p => p.kpi_key === kpiMeta.kpi_key);
           if (!pin) return null;
 
-          // Check if this is a Compliance KPI and get benchmark overrides
-          const bm = pin.source_dashboard === 'compliance-airworthiness' 
-            ? benchmarks[kpiMeta.kpi_key] 
-            : undefined;
-          
-          const overrideStats = bm
-            ? {
-                currentValue: bm.current_value,
-                previousValue: bm.last_period_value,
-                unit: bm.unit,
-                targetBand: bm.target_band,
-                aiSummaryText: bm.ai_summary_text,
-                aiCtaTitle: bm.ai_recommendation_title,
-                aiCtaLabel: bm.ai_recommendation_cta_label,
-              }
-            : undefined;
-
           return (
             <div key={kpiMeta.kpi_key} className="space-y-2">
               <div className="flex items-center justify-between">
@@ -176,7 +157,6 @@ export default function MyDashboard() {
                 variant={kpiMeta.variant as any}
                 unit={kpiMeta.unit}
                 dashboard={kpiMeta.dashboard}
-                overrideStats={overrideStats}
               />
             </div>
           );
