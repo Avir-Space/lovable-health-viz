@@ -37,7 +37,7 @@ export default function ComplianceAirworthiness() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2 gap-6 avir-two-col">
         {kpis.map((k) => {
-          const bm = benchmarks[k.kpi_key];
+          const bm = benchmarks?.[k.kpi_key];
           const overrideStats = bm
             ? {
                 currentValue: bm.current_value,
