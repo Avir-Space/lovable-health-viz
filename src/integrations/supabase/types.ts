@@ -14,11 +14,353 @@ export type Database = {
   }
   public: {
     Tables: {
+      compliance_kpi_benchmarks: {
+        Row: {
+          ai_recommendation_cta_label: string
+          ai_recommendation_title: string
+          ai_summary_text: string
+          current_value: number
+          kpi_key: string
+          last_period_value: number
+          target_band: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          ai_recommendation_cta_label: string
+          ai_recommendation_title: string
+          ai_summary_text: string
+          current_value: number
+          kpi_key: string
+          last_period_value: number
+          target_band: string
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          ai_recommendation_cta_label?: string
+          ai_recommendation_title?: string
+          ai_summary_text?: string
+          current_value?: number
+          kpi_key?: string
+          last_period_value?: number
+          target_band?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      impact_kpi_registry: {
+        Row: {
+          chart_variant: string
+          config: Json
+          created_at: string
+          dashboard: string
+          kpi_key: string
+          name: string
+          primary_source: string | null
+          product_sources: string[]
+          time_variants: string[]
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          chart_variant: string
+          config?: Json
+          created_at?: string
+          dashboard: string
+          kpi_key: string
+          name: string
+          primary_source?: string | null
+          product_sources?: string[]
+          time_variants?: string[]
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          chart_variant?: string
+          config?: Json
+          created_at?: string
+          dashboard?: string
+          kpi_key?: string
+          name?: string
+          primary_source?: string | null
+          product_sources?: string[]
+          time_variants?: string[]
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      impact_settings: {
+        Row: {
+          aog_min_cost: number
+          co2_factor: number
+          currency: string
+          delay_min_cost: number
+          effective_from: string
+          fuel_price_per_kg: number
+          id: number
+          inventory_carry_rate: number
+          overtime_hour_cost: number
+        }
+        Insert: {
+          aog_min_cost: number
+          co2_factor: number
+          currency?: string
+          delay_min_cost: number
+          effective_from?: string
+          fuel_price_per_kg: number
+          id?: never
+          inventory_carry_rate: number
+          overtime_hour_cost: number
+        }
+        Update: {
+          aog_min_cost?: number
+          co2_factor?: number
+          currency?: string
+          delay_min_cost?: number
+          effective_from?: string
+          fuel_price_per_kg?: number
+          id?: never
+          inventory_carry_rate?: number
+          overtime_hour_cost?: number
+        }
+        Relationships: []
+      }
+      impact_summaries_overall: {
+        Row: {
+          created_at: string
+          id: number
+          impact_summary: string | null
+          impact_unit: string | null
+          impact_value: number | null
+          kpi_key: string
+          period: string
+          summary_text: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          impact_summary?: string | null
+          impact_unit?: string | null
+          impact_value?: number | null
+          kpi_key: string
+          period: string
+          summary_text?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          impact_summary?: string | null
+          impact_unit?: string | null
+          impact_value?: number | null
+          kpi_key?: string
+          period?: string
+          summary_text?: string | null
+        }
+        Relationships: []
+      }
+      impact_summaries_user: {
+        Row: {
+          created_at: string
+          id: number
+          impact_summary: string | null
+          impact_unit: string | null
+          impact_value: number | null
+          kpi_key: string
+          period: string
+          summary_text: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          impact_summary?: string | null
+          impact_unit?: string | null
+          impact_value?: number | null
+          kpi_key: string
+          period: string
+          summary_text?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          impact_summary?: string | null
+          impact_unit?: string | null
+          impact_value?: number | null
+          kpi_key?: string
+          period?: string
+          summary_text?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      impact_timeseries: {
+        Row: {
+          bucket: string
+          context: string
+          created_at: string
+          id: number
+          kpi_key: string
+          series: string
+          ts: string
+          user_id: string | null
+          value: number
+        }
+        Insert: {
+          bucket?: string
+          context: string
+          created_at?: string
+          id?: number
+          kpi_key: string
+          series?: string
+          ts: string
+          user_id?: string | null
+          value: number
+        }
+        Update: {
+          bucket?: string
+          context?: string
+          created_at?: string
+          id?: number
+          kpi_key?: string
+          series?: string
+          ts?: string
+          user_id?: string | null
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "impact_timeseries_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "impact_kpi_registry"
+            referencedColumns: ["kpi_key"]
+          },
+          {
+            foreignKeyName: "impact_timeseries_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "v_impact_dynamic"
+            referencedColumns: ["kpi_key"]
+          },
+          {
+            foreignKeyName: "impact_timeseries_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "v_impact_my_cards"
+            referencedColumns: ["kpi_key"]
+          },
+          {
+            foreignKeyName: "impact_timeseries_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "v_impact_overall_cards"
+            referencedColumns: ["kpi_key"]
+          },
+          {
+            foreignKeyName: "impact_timeseries_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "v_impact_slideover"
+            referencedColumns: ["kpi_key"]
+          },
+        ]
+      }
+      kpi_actions: {
+        Row: {
+          action_cta_label: string | null
+          action_title: string | null
+          created_at: string | null
+          evidence_section: string | null
+          expected_gain: string | null
+          id: number
+          impact_if_ignored: string | null
+          kpi_key: string
+          updated_at: string | null
+          why_this_action: string | null
+        }
+        Insert: {
+          action_cta_label?: string | null
+          action_title?: string | null
+          created_at?: string | null
+          evidence_section?: string | null
+          expected_gain?: string | null
+          id?: number
+          impact_if_ignored?: string | null
+          kpi_key: string
+          updated_at?: string | null
+          why_this_action?: string | null
+        }
+        Update: {
+          action_cta_label?: string | null
+          action_title?: string | null
+          created_at?: string | null
+          evidence_section?: string | null
+          expected_gain?: string | null
+          id?: number
+          impact_if_ignored?: string | null
+          kpi_key?: string
+          updated_at?: string | null
+          why_this_action?: string | null
+        }
+        Relationships: []
+      }
+      kpi_alert_rules: {
+        Row: {
+          comparison_operator: string
+          created_at: string
+          dashboard_id: string
+          frequency: string
+          id: number
+          is_active: boolean
+          kpi_key: string
+          last_triggered_at: string | null
+          notify_email: boolean
+          notify_in_app: boolean
+          threshold_value: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comparison_operator: string
+          created_at?: string
+          dashboard_id: string
+          frequency?: string
+          id?: number
+          is_active?: boolean
+          kpi_key: string
+          last_triggered_at?: string | null
+          notify_email?: boolean
+          notify_in_app?: boolean
+          threshold_value: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comparison_operator?: string
+          created_at?: string
+          dashboard_id?: string
+          frequency?: string
+          id?: number
+          is_active?: boolean
+          kpi_key?: string
+          last_triggered_at?: string | null
+          notify_email?: boolean
+          notify_in_app?: boolean
+          threshold_value?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       kpi_categories: {
         Row: {
           category: string
           id: number
-          kpi_key: string | null
+          kpi_key: string
           series: string | null
           snapshot_ts: string
           value: number
@@ -26,7 +368,7 @@ export type Database = {
         Insert: {
           category: string
           id?: number
-          kpi_key?: string | null
+          kpi_key: string
           series?: string | null
           snapshot_ts?: string
           value: number
@@ -34,14 +376,14 @@ export type Database = {
         Update: {
           category?: string
           id?: number
-          kpi_key?: string | null
+          kpi_key?: string
           series?: string | null
           snapshot_ts?: string
           value?: number
         }
         Relationships: [
           {
-            foreignKeyName: "fk_cat_meta"
+            foreignKeyName: "kpi_categories_kpi_key_fkey"
             columns: ["kpi_key"]
             isOneToOne: false
             referencedRelation: "kpi_meta"
@@ -51,7 +393,21 @@ export type Database = {
             foreignKeyName: "kpi_categories_kpi_key_fkey"
             columns: ["kpi_key"]
             isOneToOne: false
-            referencedRelation: "kpi_meta"
+            referencedRelation: "v_impact_card_registry"
+            referencedColumns: ["kpi_key"]
+          },
+          {
+            foreignKeyName: "kpi_categories_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "v_kpi_export_full"
+            referencedColumns: ["kpi_key"]
+          },
+          {
+            foreignKeyName: "kpi_categories_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "v_kpi_product_sources"
             referencedColumns: ["kpi_key"]
           },
         ]
@@ -59,37 +415,31 @@ export type Database = {
       kpi_heatmap: {
         Row: {
           id: number
-          kpi_key: string | null
+          kpi_key: string
           snapshot_ts: string
           value: number
-          x: string | null
           x_label: string
-          y: string | null
           y_label: string
         }
         Insert: {
           id?: number
-          kpi_key?: string | null
+          kpi_key: string
           snapshot_ts?: string
           value: number
-          x?: string | null
-          x_label?: string
-          y?: string | null
-          y_label?: string
+          x_label: string
+          y_label: string
         }
         Update: {
           id?: number
-          kpi_key?: string | null
+          kpi_key?: string
           snapshot_ts?: string
           value?: number
-          x?: string | null
           x_label?: string
-          y?: string | null
           y_label?: string
         }
         Relationships: [
           {
-            foreignKeyName: "fk_heat_meta"
+            foreignKeyName: "kpi_heatmap_kpi_key_fkey"
             columns: ["kpi_key"]
             isOneToOne: false
             referencedRelation: "kpi_meta"
@@ -99,14 +449,28 @@ export type Database = {
             foreignKeyName: "kpi_heatmap_kpi_key_fkey"
             columns: ["kpi_key"]
             isOneToOne: false
-            referencedRelation: "kpi_meta"
+            referencedRelation: "v_impact_card_registry"
+            referencedColumns: ["kpi_key"]
+          },
+          {
+            foreignKeyName: "kpi_heatmap_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "v_kpi_export_full"
+            referencedColumns: ["kpi_key"]
+          },
+          {
+            foreignKeyName: "kpi_heatmap_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "v_kpi_product_sources"
             referencedColumns: ["kpi_key"]
           },
         ]
       }
       kpi_meta: {
         Row: {
-          config: Json | null
+          config: Json
           dashboard: string
           kpi_key: string
           name: string
@@ -116,7 +480,7 @@ export type Database = {
           y_axis: string | null
         }
         Insert: {
-          config?: Json | null
+          config?: Json
           dashboard: string
           kpi_key: string
           name: string
@@ -126,7 +490,7 @@ export type Database = {
           y_axis?: string | null
         }
         Update: {
-          config?: Json | null
+          config?: Json
           dashboard?: string
           kpi_key?: string
           name?: string
@@ -137,28 +501,81 @@ export type Database = {
         }
         Relationships: []
       }
+      kpi_product_sources: {
+        Row: {
+          created_at: string
+          kpi_key: string
+          product_source: string
+          sources: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          kpi_key: string
+          product_source: string
+          sources: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          kpi_key?: string
+          product_source?: string
+          sources?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_product_sources_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: true
+            referencedRelation: "kpi_meta"
+            referencedColumns: ["kpi_key"]
+          },
+          {
+            foreignKeyName: "kpi_product_sources_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: true
+            referencedRelation: "v_impact_card_registry"
+            referencedColumns: ["kpi_key"]
+          },
+          {
+            foreignKeyName: "kpi_product_sources_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: true
+            referencedRelation: "v_kpi_export_full"
+            referencedColumns: ["kpi_key"]
+          },
+          {
+            foreignKeyName: "kpi_product_sources_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: true
+            referencedRelation: "v_kpi_product_sources"
+            referencedColumns: ["kpi_key"]
+          },
+        ]
+      }
       kpi_table_rows: {
         Row: {
           id: number
-          kpi_key: string | null
-          row: Json | null
+          kpi_key: string
+          row: Json
           snapshot_ts: string
         }
         Insert: {
           id?: number
-          kpi_key?: string | null
-          row?: Json | null
+          kpi_key: string
+          row: Json
           snapshot_ts?: string
         }
         Update: {
           id?: number
-          kpi_key?: string | null
-          row?: Json | null
+          kpi_key?: string
+          row?: Json
           snapshot_ts?: string
         }
         Relationships: [
           {
-            foreignKeyName: "fk_tbl_meta"
+            foreignKeyName: "kpi_table_rows_kpi_key_fkey"
             columns: ["kpi_key"]
             isOneToOne: false
             referencedRelation: "kpi_meta"
@@ -168,42 +585,56 @@ export type Database = {
             foreignKeyName: "kpi_table_rows_kpi_key_fkey"
             columns: ["kpi_key"]
             isOneToOne: false
-            referencedRelation: "kpi_meta"
+            referencedRelation: "v_impact_card_registry"
+            referencedColumns: ["kpi_key"]
+          },
+          {
+            foreignKeyName: "kpi_table_rows_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "v_kpi_export_full"
+            referencedColumns: ["kpi_key"]
+          },
+          {
+            foreignKeyName: "kpi_table_rows_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "v_kpi_product_sources"
             referencedColumns: ["kpi_key"]
           },
         ]
       }
       kpi_timeseries: {
         Row: {
+          bucket: string | null
           id: number
-          inserted_at: string | null
-          kpi_key: string | null
-          range_tag: string | null
+          kpi_key: string
+          range_tag: string
           series: string | null
           ts: string
           value: number
         }
         Insert: {
+          bucket?: string | null
           id?: number
-          inserted_at?: string | null
-          kpi_key?: string | null
-          range_tag?: string | null
+          kpi_key: string
+          range_tag: string
           series?: string | null
           ts: string
           value: number
         }
         Update: {
+          bucket?: string | null
           id?: number
-          inserted_at?: string | null
-          kpi_key?: string | null
-          range_tag?: string | null
+          kpi_key?: string
+          range_tag?: string
           series?: string | null
           ts?: string
           value?: number
         }
         Relationships: [
           {
-            foreignKeyName: "fk_ts_meta"
+            foreignKeyName: "kpi_timeseries_kpi_key_fkey"
             columns: ["kpi_key"]
             isOneToOne: false
             referencedRelation: "kpi_meta"
@@ -213,14 +644,281 @@ export type Database = {
             foreignKeyName: "kpi_timeseries_kpi_key_fkey"
             columns: ["kpi_key"]
             isOneToOne: false
-            referencedRelation: "kpi_meta"
+            referencedRelation: "v_impact_card_registry"
+            referencedColumns: ["kpi_key"]
+          },
+          {
+            foreignKeyName: "kpi_timeseries_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "v_kpi_export_full"
+            referencedColumns: ["kpi_key"]
+          },
+          {
+            foreignKeyName: "kpi_timeseries_kpi_key_fkey"
+            columns: ["kpi_key"]
+            isOneToOne: false
+            referencedRelation: "v_kpi_product_sources"
             referencedColumns: ["kpi_key"]
           },
         ]
       }
+      pinned_kpis: {
+        Row: {
+          created_at: string
+          id: number
+          kpi_key: string
+          sort_order: number
+          source_dashboard: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          kpi_key: string
+          sort_order?: number
+          source_dashboard: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          kpi_key?: string
+          sort_order?: number
+          source_dashboard?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      impact_ai_summaries: {
+        Row: {
+          context: string | null
+          impact_unit: string | null
+          impact_value: number | null
+          kpi_key: string | null
+          period: string | null
+          period_end: string | null
+          summary: string | null
+          summary_text: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      v_impact_card_registry: {
+        Row: {
+          action_cta_label: string | null
+          action_title: string | null
+          kpi_key: string | null
+          name: string | null
+          product_sources: string[] | null
+          unit: string | null
+        }
+        Relationships: []
+      }
+      v_impact_dynamic: {
+        Row: {
+          chart_variant: string | null
+          computed_at: string | null
+          current_value: number | null
+          dashboard: string | null
+          impact_percentage: number | null
+          impact_trend: string | null
+          kpi_key: string | null
+          kpi_name: string | null
+          previous_value: number | null
+          product_sources: string[] | null
+          unit: string | null
+        }
+        Relationships: []
+      }
+      v_impact_my_cards: {
+        Row: {
+          chart_variant: string | null
+          computed_at: string | null
+          dashboard: string | null
+          impact_value: number | null
+          kpi_key: string | null
+          kpi_name: string | null
+          product_sources: string[] | null
+          unit: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      v_impact_overall_aog_minutes_avoided: {
+        Row: {
+          bucket: string | null
+          context: string | null
+          kpi_key: string | null
+          series: string | null
+          ts: string | null
+          value: number | null
+        }
+        Relationships: []
+      }
+      v_impact_overall_cards: {
+        Row: {
+          chart_variant: string | null
+          computed_at: string | null
+          current_value: number | null
+          dashboard: string | null
+          impact_percentage: number | null
+          impact_trend: string | null
+          kpi_key: string | null
+          kpi_name: string | null
+          previous_value: number | null
+          product_sources: string[] | null
+          unit: string | null
+        }
+        Relationships: []
+      }
+      v_impact_overall_cost_saved: {
+        Row: {
+          bucket: string | null
+          context: string | null
+          kpi_key: string | null
+          series: string | null
+          ts: string | null
+          value: number | null
+        }
+        Relationships: []
+      }
+      v_impact_overall_crew_overtime_hours: {
+        Row: {
+          bucket: string | null
+          context: string | null
+          kpi_key: string | null
+          series: string | null
+          ts: string | null
+          value: number | null
+        }
+        Relationships: []
+      }
+      v_impact_overall_fuel_saved: {
+        Row: {
+          bucket: string | null
+          context: string | null
+          kpi_key: string | null
+          series: string | null
+          ts: string | null
+          value: number | null
+        }
+        Relationships: []
+      }
+      v_impact_overall_grounded_due_to_spares: {
+        Row: {
+          bucket: string | null
+          context: string | null
+          kpi_key: string | null
+          series: string | null
+          ts: string | null
+          value: number | null
+        }
+        Relationships: []
+      }
+      v_impact_overall_non_tech_delay_minutes: {
+        Row: {
+          bucket: string | null
+          context: string | null
+          kpi_key: string | null
+          series: string | null
+          ts: string | null
+          value: number | null
+        }
+        Relationships: []
+      }
+      v_impact_overall_tech_delay_minutes: {
+        Row: {
+          bucket: string | null
+          context: string | null
+          kpi_key: string | null
+          series: string | null
+          ts: string | null
+          value: number | null
+        }
+        Relationships: []
+      }
+      v_impact_overall_timeseries: {
+        Row: {
+          bucket: string | null
+          context: string | null
+          kpi_key: string | null
+          series: string | null
+          ts: string | null
+          value: number | null
+        }
+        Relationships: []
+      }
+      v_impact_overall_warranty_recovery_rate: {
+        Row: {
+          bucket: string | null
+          context: string | null
+          kpi_key: string | null
+          series: string | null
+          ts: string | null
+          value: number | null
+        }
+        Relationships: []
+      }
+      v_impact_slideover: {
+        Row: {
+          action_cta_label: string | null
+          action_title: string | null
+          action_ts: string | null
+          chart_variant: string | null
+          dashboard: string | null
+          evidence_section: string | null
+          expected_gain: string | null
+          impact_if_ignored: string | null
+          kpi_key: string | null
+          name: string | null
+          primary_source: string | null
+          product_sources: string[] | null
+          unit: string | null
+          why_this_action: string | null
+        }
+        Relationships: []
+      }
+      v_kpi_export_full: {
+        Row: {
+          action_cta_label: string | null
+          action_title: string | null
+          ai_context: string | null
+          ai_impact_unit: string | null
+          ai_impact_value: number | null
+          ai_period: string | null
+          ai_period_end: string | null
+          ai_summary: string | null
+          ai_summary_text: string | null
+          bucket: string | null
+          chart_variant: string | null
+          dashboard: string | null
+          evidence_section: string | null
+          expected_gain: string | null
+          impact_if_ignored: string | null
+          kpi_config: Json | null
+          kpi_key: string | null
+          kpi_name: string | null
+          range_tag: string | null
+          series: string | null
+          timeseries_id: number | null
+          ts: string | null
+          unit: string | null
+          value: number | null
+          why_this_action: string | null
+          x_axis: string | null
+          y_axis: string | null
+        }
+        Relationships: []
+      }
+      v_kpi_product_sources: {
+        Row: {
+          dashboard: string | null
+          kpi_key: string | null
+          name: string | null
+          source: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _fx_day_grid: {
@@ -237,9 +935,21 @@ export type Database = {
           ts: string
         }[]
       }
-      _hash01: { Args: { txt: string }; Returns: number }
+      _hash01: { Args: { p: string }; Returns: number }
+      _jitter: {
+        Args: { base: number; salt: string; spread: number }
+        Returns: number
+      }
+      core_get_kpi_payload: {
+        Args: { p_kpi_key: string; p_range_tag?: string }
+        Returns: Json
+      }
+      get_impact_slideover_payload: {
+        Args: { p_kpi_key: string; p_user_id: string }
+        Returns: Json
+      }
       get_kpi_payload: {
-        Args: { kpi_key: string; range_tag: string }
+        Args: { kpi_key: string; range_tag?: string }
         Returns: Json
       }
       kpi_latest_categories: {
@@ -272,6 +982,16 @@ export type Database = {
           value: number
         }[]
       }
+      rebuild_impact_timeseries_overall: { Args: never; Returns: undefined }
+      seed_all_kpis: { Args: never; Returns: undefined }
+      seed_categories_kpi: {
+        Args: { k: string; pie_or_bar: string }
+        Returns: undefined
+      }
+      seed_gauge_numeric_kpi: { Args: { k: string }; Returns: undefined }
+      seed_heatmap_kpi: { Args: { k: string }; Returns: undefined }
+      seed_line_kpi: { Args: { k: string }; Returns: undefined }
+      seed_table_kpi: { Args: { k: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
