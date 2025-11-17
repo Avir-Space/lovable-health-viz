@@ -17,9 +17,9 @@ import {
 } from "@/components/ui/tooltip";
 
 const DASHBOARD_LABELS: Record<string, string> = {
-  'maintenance-health': 'Maintenance Health',
+  'maintenance-health-overview': 'Maintenance Health',
   'inventory-spares-visibility': 'Inventory & Spares',
-  'compliance-airworthiness': 'Compliance & Airworthiness',
+  'compliance-airworthiness': 'Airworthiness Management',
   'ops-dispatch-reliability': 'Ops & Dispatch',
   'fuel-efficiency': 'Fuel & Efficiency',
   'financial-procurement': 'Financial & Procurement',

@@ -16,6 +16,7 @@ import Admin from "./pages/Admin";
 import MaintenanceHealthOverview from "./pages/dashboards/MaintenanceHealthOverview";
 import InventoryAndSparesVisibility from "./pages/dashboards/InventoryAndSparesVisibility";
 import ComplianceAirworthiness from "./pages/dashboards/ComplianceAirworthiness";
+import AirworthinessManagement from "./pages/dashboards/AirworthinessManagement";
 import OpsDispatchReliability from "./pages/dashboards/OpsDispatchReliability";
 import FuelEfficiency from "./pages/dashboards/FuelEfficiency";
 import FinancialProcurement from "./pages/dashboards/FinancialProcurement";
@@ -48,6 +49,7 @@ const App = () => (
                     <Route path="/dashboards/maintenance-health-overview" element={<MaintenanceHealthOverview />} />
                     <Route path="/dashboards/inventory-spares-visibility" element={<InventoryAndSparesVisibility />} />
                     <Route path="/dashboards/compliance-airworthiness" element={<ComplianceAirworthiness />} />
+                    <Route path="/dashboards/airworthiness-management" element={<AirworthinessManagement />} />
                     <Route path="/dashboards/ops-dispatch-reliability" element={<OpsDispatchReliability />} />
                     <Route path="/dashboards/fuel-efficiency" element={<FuelEfficiency />} />
                     <Route path="/dashboards/financial-procurement" element={<FinancialProcurement />} />
