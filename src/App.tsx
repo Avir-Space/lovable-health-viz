@@ -21,6 +21,7 @@ import OpsDispatchReliability from "./pages/dashboards/OpsDispatchReliability";
 import FuelEfficiency from "./pages/dashboards/FuelEfficiency";
 import FinancialProcurement from "./pages/dashboards/FinancialProcurement";
 import CrewDutySnapshot from "./pages/dashboards/CrewDutySnapshot";
+import CentralTasks from "./pages/CentralTasks";
 import NotFound from "./pages/NotFound";
 import KpiSelfTest from "./components/KpiSelfTest";
 
@@ -44,6 +45,7 @@ const App = () => (
                     <Route path="/" element={<Index />} />
                     <Route path="/my-dashboard" element={<MyDashboard />} />
                     <Route path="/overall-impact" element={<OverallImpact />} />
+                    <Route path="/central-tasks" element={<CentralTasks />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="/admin" element={<Admin />} />
                     <Route path="/dashboards/maintenance-health-overview" element={<MaintenanceHealthOverview />} />

@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      central_tasks: {
+        Row: {
+          aircraft_reg: string | null
+          assignee_id: string | null
+          assignee_name: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          fleet: string | null
+          id: number
+          impact_band: string | null
+          location: string | null
+          priority: string
+          sort_order: number | null
+          source_dashboard: string | null
+          source_kpi_key: string | null
+          source_ref: Json | null
+          source_type: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          aircraft_reg?: string | null
+          assignee_id?: string | null
+          assignee_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          fleet?: string | null
+          id?: number
+          impact_band?: string | null
+          location?: string | null
+          priority?: string
+          sort_order?: number | null
+          source_dashboard?: string | null
+          source_kpi_key?: string | null
+          source_ref?: Json | null
+          source_type?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          aircraft_reg?: string | null
+          assignee_id?: string | null
+          assignee_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          fleet?: string | null
+          id?: number
+          impact_band?: string | null
+          location?: string | null
+          priority?: string
+          sort_order?: number | null
+          source_dashboard?: string | null
+          source_kpi_key?: string | null
+          source_ref?: Json | null
+          source_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       compliance_kpi_benchmarks: {
         Row: {
           ai_recommendation_cta_label: string
