@@ -301,12 +301,12 @@ export default function CentralTasks() {
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-6">
+      <div className="px-6 py-6 overflow-x-auto">
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">Loading tasks...</div>
         ) : (
           <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <div className="flex gap-4 overflow-x-auto pb-4">
+            <div className="flex gap-5 pb-4 min-w-max">
               {STATUS_COLUMNS.map((column) => (
                 <TaskColumn
                   key={column.key}
