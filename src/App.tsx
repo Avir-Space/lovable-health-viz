@@ -22,6 +22,7 @@ import FuelEfficiency from "./pages/dashboards/FuelEfficiency";
 import FinancialProcurement from "./pages/dashboards/FinancialProcurement";
 import CrewDutySnapshot from "./pages/dashboards/CrewDutySnapshot";
 import CentralTasks from "./pages/CentralTasks";
+import Aircraft from "./pages/Aircraft";
 import NotFound from "./pages/NotFound";
 import KpiSelfTest from "./components/KpiSelfTest";
 
@@ -45,8 +46,9 @@ const App = () => (
                     <Route path="/" element={<Index />} />
                     <Route path="/my-dashboard" element={<MyDashboard />} />
                     <Route path="/overall-impact" element={<OverallImpact />} />
-                    <Route path="/central-tasks" element={<CentralTasks />} />
-                    <Route path="/settings" element={<Settings />} />
+              <Route path="/central-tasks" element={<CentralTasks />} />
+              <Route path="/aircraft" element={<Aircraft />} />
+              <Route path="/settings" element={<Settings />} />
                     <Route path="/admin" element={<Admin />} />
                     <Route path="/dashboards/maintenance-health-overview" element={<MaintenanceHealthOverview />} />
                     <Route path="/dashboards/inventory-spares-visibility" element={<InventoryAndSparesVisibility />} />
