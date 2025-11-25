@@ -60,8 +60,8 @@ export default function Aircraft() {
   }, [aircraft, searchQuery, readinessFilter, aogFilter]);
 
   const handleRowClick = (ac: Aircraft) => {
-    setSelectedAircraft(ac);
-    setDrawerOpen(true);
+    // Navigate to aircraft profile instead of opening drawer
+    window.location.href = `/aircraft/${ac.id}`;
   };
 
   if (loading) {
