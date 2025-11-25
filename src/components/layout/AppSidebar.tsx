@@ -1,4 +1,4 @@
-import { Home, BarChart3, TrendingUp, Settings, Shield, ChevronDown, ListChecks } from "lucide-react";
+import { Home, BarChart3, TrendingUp, Settings, Shield, ChevronDown, ListChecks, Plane } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -18,6 +18,7 @@ const navItems = [
   { title: "My Dashboard", url: "/my-dashboard", icon: Home },
   { title: "Overall Impact", url: "/overall-impact", icon: TrendingUp },
   { title: "Central Tasks", url: "/central-tasks", icon: ListChecks },
+  { title: "Aircraft Management", url: "/aircraft", icon: Plane },
 ];
 
 const predefinedDashboards = [

@@ -14,6 +14,166 @@ export type Database = {
   }
   public: {
     Tables: {
+      aircraft: {
+        Row: {
+          airworthiness_state: string | null
+          base_airport_code: string | null
+          country: string | null
+          created_at: string
+          external_tracking_id: string | null
+          external_tracking_source: string | null
+          fleet_type: string | null
+          health_index: number | null
+          icao24_hex: string | null
+          id: string
+          is_active: boolean | null
+          is_aog: boolean | null
+          last_arrival_airport: string | null
+          last_departure_airport: string | null
+          last_flight_arrival_at: string | null
+          last_flight_departure_at: string | null
+          last_known_altitude_ft: number | null
+          last_known_lat: number | null
+          last_known_lon: number | null
+          last_known_speed_kt: number | null
+          last_position_at: string | null
+          last_position_source: string | null
+          meta: Json | null
+          operator_name: string | null
+          org_id: string
+          predicted_next_compliance_at: string | null
+          predicted_next_maintenance_at: string | null
+          readiness_status: string | null
+          registration: string
+          serial_number: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          airworthiness_state?: string | null
+          base_airport_code?: string | null
+          country?: string | null
+          created_at?: string
+          external_tracking_id?: string | null
+          external_tracking_source?: string | null
+          fleet_type?: string | null
+          health_index?: number | null
+          icao24_hex?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_aog?: boolean | null
+          last_arrival_airport?: string | null
+          last_departure_airport?: string | null
+          last_flight_arrival_at?: string | null
+          last_flight_departure_at?: string | null
+          last_known_altitude_ft?: number | null
+          last_known_lat?: number | null
+          last_known_lon?: number | null
+          last_known_speed_kt?: number | null
+          last_position_at?: string | null
+          last_position_source?: string | null
+          meta?: Json | null
+          operator_name?: string | null
+          org_id: string
+          predicted_next_compliance_at?: string | null
+          predicted_next_maintenance_at?: string | null
+          readiness_status?: string | null
+          registration: string
+          serial_number?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          airworthiness_state?: string | null
+          base_airport_code?: string | null
+          country?: string | null
+          created_at?: string
+          external_tracking_id?: string | null
+          external_tracking_source?: string | null
+          fleet_type?: string | null
+          health_index?: number | null
+          icao24_hex?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_aog?: boolean | null
+          last_arrival_airport?: string | null
+          last_departure_airport?: string | null
+          last_flight_arrival_at?: string | null
+          last_flight_departure_at?: string | null
+          last_known_altitude_ft?: number | null
+          last_known_lat?: number | null
+          last_known_lon?: number | null
+          last_known_speed_kt?: number | null
+          last_position_at?: string | null
+          last_position_source?: string | null
+          meta?: Json | null
+          operator_name?: string | null
+          org_id?: string
+          predicted_next_compliance_at?: string | null
+          predicted_next_maintenance_at?: string | null
+          readiness_status?: string | null
+          registration?: string
+          serial_number?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aircraft_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aircraft_counters: {
+        Row: {
+          aircraft_id: string
+          counter_key: string
+          created_at: string
+          current_value: number | null
+          id: string
+          last_update_source: string | null
+          last_updated_at: string
+          meta: Json | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          aircraft_id: string
+          counter_key: string
+          created_at?: string
+          current_value?: number | null
+          id?: string
+          last_update_source?: string | null
+          last_updated_at?: string
+          meta?: Json | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aircraft_id?: string
+          counter_key?: string
+          created_at?: string
+          current_value?: number | null
+          id?: string
+          last_update_source?: string | null
+          last_updated_at?: string
+          meta?: Json | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aircraft_counters_aircraft_id_fkey"
+            columns: ["aircraft_id"]
+            isOneToOne: false
+            referencedRelation: "aircraft"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       central_tasks: {
         Row: {
           aircraft_reg: string | null
@@ -731,6 +891,53 @@ export type Database = {
             referencedColumns: ["kpi_key"]
           },
         ]
+      }
+      org_members: {
+        Row: {
+          created_at: string
+          org_id: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          org_id: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          org_id?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orgs: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       pinned_kpis: {
         Row: {
