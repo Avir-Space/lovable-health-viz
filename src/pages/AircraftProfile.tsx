@@ -170,7 +170,7 @@ export default function AircraftProfile() {
                         <Button size="sm" variant="outline">Open Source Dashboard</Button>
                       </div>
                       <p className="text-sm text-muted-foreground mt-3">
-                        <strong>Recommended:</strong> {signal.recommendedAction}
+                        <strong>Recommended:</strong> {signal.recommendation}
                       </p>
                     </CardContent>
                   </Card>
@@ -197,14 +197,14 @@ export default function AircraftProfile() {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardDescription>Delay Reduction</CardDescription>
-                    <CardTitle className="text-2xl">{aircraft.impact.delayReduction}</CardTitle>
+                    <CardTitle className="text-2xl">{aircraft.impact.delayReductionPercent}%</CardTitle>
                   </CardHeader>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
                     <CardDescription>Forecast Risk</CardDescription>
-                    <Badge variant={getRiskColor(aircraft.impact.forecastImpactRisk)} className="text-base px-3 py-1">
-                      {aircraft.impact.forecastImpactRisk.toUpperCase()}
+                    <Badge variant={getRiskColor(aircraft.impact.forecastRisk)} className="text-base px-3 py-1">
+                      {aircraft.impact.forecastRisk.toUpperCase()}
                     </Badge>
                   </CardHeader>
                 </Card>
@@ -270,21 +270,21 @@ export default function AircraftProfile() {
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-muted-foreground">Last 7 Days</span>
-                        <span className="font-medium">{aircraft.opsProfile.utilization7d}h</span>
+                        <span className="font-medium">{aircraft.opsProfile.utilization7dHours}h</span>
                       </div>
-                      <Progress value={(aircraft.opsProfile.utilization7d / 50) * 100} className="h-2" />
+                      <Progress value={(aircraft.opsProfile.utilization7dHours / 50) * 100} className="h-2" />
                     </div>
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-muted-foreground">Last 30 Days</span>
-                        <span className="font-medium">{aircraft.opsProfile.utilization30d}h</span>
+                        <span className="font-medium">{aircraft.opsProfile.utilization30dHours}h</span>
                       </div>
-                      <Progress value={(aircraft.opsProfile.utilization30d / 200) * 100} className="h-2" />
+                      <Progress value={(aircraft.opsProfile.utilization30dHours / 200) * 100} className="h-2" />
                     </div>
                     <Separator />
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Dispatch Reliability</span>
-                      <span className="font-medium">{aircraft.opsProfile.dispatchReliability}</span>
+                      <span className="font-medium">{aircraft.opsProfile.dispatchReliabilityPercent}%</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Fuel Efficiency</span>
@@ -294,14 +294,14 @@ export default function AircraftProfile() {
                 </Card>
               </div>
 
-              {aircraft.opsProfile.flights.length > 0 && (
+              {aircraft.opsProfile.recentFlights.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Recent Flights</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {aircraft.opsProfile.flights.map((flight, idx) => (
+                      {aircraft.opsProfile.recentFlights.map((flight, idx) => (
                         <div key={idx} className="flex items-center justify-between p-3 rounded-lg border">
                           <div className="flex items-center gap-4">
                             <span className="text-sm text-muted-foreground">{flight.date}</span>
@@ -309,7 +309,7 @@ export default function AircraftProfile() {
                           </div>
                           <div className="flex gap-4 text-sm">
                             <span className="text-muted-foreground">Block: {flight.blockTime}</span>
-                            <span className="text-muted-foreground">Flight: {flight.flightTime}</span>
+                            <span className="text-muted-foreground">Delay: {flight.delayMinutes}m</span>
                           </div>
                         </div>
                       ))}
@@ -331,7 +331,7 @@ export default function AircraftProfile() {
                             <p className="font-medium">{delay.route}</p>
                             <p className="text-sm text-muted-foreground">{delay.cause}</p>
                           </div>
-                          <Badge variant="outline">Avg: {delay.avgDelay}</Badge>
+                          <Badge variant="outline">Avg: {delay.avgDelayMinutes}m</Badge>
                         </div>
                       ))}
                     </div>
@@ -350,7 +350,7 @@ export default function AircraftProfile() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {aircraft.maintenanceSnapshot.nextDue.map((task, idx) => (
+                    {aircraft.maintenanceSnapshot.nextDueTasks.map((task, idx) => (
                       <div key={idx} className="flex items-center justify-between p-3 rounded-lg border">
                         <div>
                           <p className="font-medium">{task.task}</p>
@@ -391,7 +391,7 @@ export default function AircraftProfile() {
                       {aircraft.maintenanceSnapshot.lifedPartWarnings.map((part, idx) => (
                         <div key={idx} className="flex items-center justify-between p-3 rounded-lg border">
                           <p className="font-medium">{part.part}</p>
-                          <span className="text-sm text-muted-foreground">{part.remaining}</span>
+                          <span className="text-sm text-muted-foreground">{part.note}</span>
                         </div>
                       ))}
                     </div>
@@ -404,25 +404,20 @@ export default function AircraftProfile() {
             <section id="airworthiness" className="space-y-4">
               <h2 className="text-xl font-semibold">Airworthiness & Compliance</h2>
               
-              {aircraft.airworthiness.upcomingCompliance.length > 0 && (
+              {aircraft.airworthinessSnapshot.upcomingCompliance.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Upcoming Compliance</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {aircraft.airworthiness.upcomingCompliance.map((item, idx) => (
+                      {aircraft.airworthinessSnapshot.upcomingCompliance.map((item, idx) => (
                         <div key={idx} className="flex items-center justify-between p-3 rounded-lg border">
                           <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <Badge variant="outline">{item.type}</Badge>
-                              <p className="font-medium">{item.title}</p>
-                            </div>
-                            <p className="text-sm text-muted-foreground">Due in {item.dueIn}</p>
+                            <p className="font-medium">{item.title}</p>
+                            <p className="text-sm text-muted-foreground">Due in {item.dueInDays} days</p>
                           </div>
-                          <div className="w-32">
-                            <Progress value={75} className="h-2" />
-                          </div>
+                          <Badge variant={getRiskColor(item.risk)}>{item.risk.toUpperCase()}</Badge>
                         </div>
                       ))}
                     </div>
@@ -430,17 +425,17 @@ export default function AircraftProfile() {
                 </Card>
               )}
 
-              {aircraft.airworthiness.overdue.length > 0 && (
+              {aircraft.airworthinessSnapshot.overdueCompliance.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Overdue Items</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {aircraft.airworthiness.overdue.map((item, idx) => (
+                      {aircraft.airworthinessSnapshot.overdueCompliance.map((item, idx) => (
                         <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-destructive/5 border border-destructive/20">
                           <p className="font-medium">{item.title}</p>
-                          <Badge variant="destructive">Overdue {item.overdueBy}</Badge>
+                          <Badge variant="destructive">Overdue {item.overdueDays}d</Badge>
                         </div>
                       ))}
                     </div>
@@ -448,17 +443,20 @@ export default function AircraftProfile() {
                 </Card>
               )}
 
-              {aircraft.airworthiness.melItems.length > 0 && (
+              {aircraft.airworthinessSnapshot.melItems.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle>MEL Items</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {aircraft.airworthiness.melItems.map((item, idx) => (
+                      {aircraft.airworthinessSnapshot.melItems.map((item, idx) => (
                         <div key={idx} className="flex items-center justify-between p-3 rounded-lg border">
-                          <p className="font-medium">{item.item}</p>
-                          <span className="text-sm text-muted-foreground">Deferred until {item.deferredUntil}</span>
+                          <div>
+                            <p className="font-medium">{item.code}</p>
+                            <p className="text-sm text-muted-foreground">{item.description}</p>
+                          </div>
+                          <Badge variant="outline">{item.impact}</Badge>
                         </div>
                       ))}
                     </div>
@@ -466,9 +464,9 @@ export default function AircraftProfile() {
                 </Card>
               )}
 
-              {aircraft.airworthiness.upcomingCompliance.length === 0 && 
-               aircraft.airworthiness.overdue.length === 0 && 
-               aircraft.airworthiness.melItems.length === 0 && (
+              {aircraft.airworthinessSnapshot.upcomingCompliance.length === 0 && 
+               aircraft.airworthinessSnapshot.overdueCompliance.length === 0 && 
+               aircraft.airworthinessSnapshot.melItems.length === 0 && (
                 <Card>
                   <CardContent className="py-8 text-center">
                     <p className="text-muted-foreground">All compliance items up to date</p>
@@ -491,8 +489,8 @@ export default function AircraftProfile() {
                       {aircraft.inventory.blockingParts.map((part, idx) => (
                         <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-warning/5 border border-warning/20">
                           <div>
-                            <p className="font-medium">{part.part}</p>
-                            <p className="text-sm text-muted-foreground">Lead time: {part.leadTime}</p>
+                            <p className="font-medium">{part.partNumber} - {part.description}</p>
+                            <p className="text-sm text-muted-foreground">Lead time: {part.leadTimeDays} days</p>
                           </div>
                           <Badge variant={getRiskColor(part.risk)}>{part.risk.toUpperCase()}</Badge>
                         </div>
@@ -511,7 +509,7 @@ export default function AircraftProfile() {
                     <div className="space-y-2">
                       {aircraft.inventory.reservedParts.map((part, idx) => (
                         <div key={idx} className="flex items-center justify-between p-3 rounded-lg border">
-                          <p className="font-medium">{part.part}</p>
+                          <p className="font-medium">{part.partNumber} - {part.description}</p>
                           <Badge variant="outline">{part.location}</Badge>
                         </div>
                       ))}
