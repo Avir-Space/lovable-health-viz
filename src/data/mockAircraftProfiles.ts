@@ -170,6 +170,13 @@ export const mockAircraftProfiles: MockAircraftProfile[] = [
         recommendedAction: 'Schedule borescope inspection within 48 hours',
       },
       {
+        severity: 'high',
+        source: 'Inventory',
+        title: 'Critical AOG Risk - No Backup for Key Component',
+        description: 'Hydraulic actuator PN-7734 has zero inventory across network. Single failure could ground aircraft.',
+        recommendedAction: 'Emergency procurement and expedited shipping required',
+      },
+      {
         severity: 'medium',
         source: 'Airworthiness',
         title: 'AD 2024-05 Due in 36 Days',
@@ -184,11 +191,32 @@ export const mockAircraftProfiles: MockAircraftProfile[] = [
         recommendedAction: 'Expedite order or coordinate with other bases',
       },
       {
+        severity: 'medium',
+        source: 'Financial',
+        title: 'Maintenance Cost Trending 18% Above Budget',
+        description: 'Unscheduled repairs driving cost overruns. APU and hydraulic system driving 60% of variance.',
+        recommendedAction: 'Review root cause and adjust maintenance planning',
+      },
+      {
         severity: 'low',
         source: 'Ops',
         title: 'Recurring Gate Delays on DXB-DOH',
         description: 'Route DXB-DOH shows consistent 14-minute delays due to gate congestion.',
         recommendedAction: 'Review departure slot planning with Ops',
+      },
+      {
+        severity: 'low',
+        source: 'Crew',
+        title: 'Galley Equipment Reliability Issues',
+        description: 'Coffee maker and oven intermittent failures reported on 4 recent flights.',
+        recommendedAction: 'Schedule galley equipment inspection',
+      },
+      {
+        severity: 'low',
+        source: 'Maintenance Health',
+        title: 'APU Oil Consumption Slightly Elevated',
+        description: 'APU oil consumption increased 12% over last 30 days. Still within limits but monitoring advised.',
+        recommendedAction: 'Continue monitoring, schedule oil analysis',
       },
     ],
     
@@ -219,6 +247,11 @@ export const mockAircraftProfiles: MockAircraftProfile[] = [
         { date: '2025-11-24', from: 'DXB', to: 'BOM', blockTime: '2:45', flightTime: '2:35' },
         { date: '2025-11-24', from: 'BOM', to: 'DXB', blockTime: '2:50', flightTime: '2:40' },
         { date: '2025-11-23', from: 'DXB', to: 'DEL', blockTime: '3:15', flightTime: '3:05' },
+        { date: '2025-11-23', from: 'DEL', to: 'DXB', blockTime: '3:20', flightTime: '3:10' },
+        { date: '2025-11-22', from: 'DXB', to: 'MCT', blockTime: '0:55', flightTime: '0:45' },
+        { date: '2025-11-22', from: 'MCT', to: 'DXB', blockTime: '1:00', flightTime: '0:50' },
+        { date: '2025-11-21', from: 'DXB', to: 'RUH', blockTime: '2:10', flightTime: '2:00' },
+        { date: '2025-11-21', from: 'RUH', to: 'DXB', blockTime: '2:15', flightTime: '2:05' },
       ],
       fuelEfficiency: '2.8% below fleet average',
     },
@@ -227,37 +260,53 @@ export const mockAircraftProfiles: MockAircraftProfile[] = [
       nextDue: [
         { task: 'Oil Filter Replacement', dueIn: '22h', risk: 'low' },
         { task: 'SB 643 Fan Blade Inspection', dueIn: '14 days', risk: 'medium' },
+        { task: 'A-Check Package', dueIn: '18 days', risk: 'medium' },
         { task: 'Landing Gear Lubrication', dueIn: '28 days', risk: 'low' },
+        { task: 'ELT Battery Replacement', dueIn: '42 days', risk: 'low' },
+        { task: 'Hydraulic System Service', dueIn: '55 days', risk: 'low' },
       ],
       abnormalPatterns: [
         { title: 'Engine 1 Vibration Trend', description: '5% above baseline last 10 flights. Monitoring required.' },
         { title: 'APU Start Reliability', description: '2 failed starts in last 30 days. Investigate starter motor.' },
+        { title: 'Brake Wear Accelerating', description: 'Left main brake wear 15% faster than right. Possible dragging issue.' },
+        { title: 'Hydraulic Fluid Consumption', description: 'System 2 fluid top-ups more frequent. Check for minor leaks.' },
       ],
       lifedPartWarnings: [
         { part: 'ENG1 LP Turbine Module', remaining: '450 cycles to limit' },
+        { part: 'ENG2 Fan Module', remaining: '820 cycles to limit' },
         { part: 'Nose Landing Gear', remaining: '1,200 cycles to overhaul' },
+        { part: 'Main Landing Gear Left', remaining: '1,450 cycles to overhaul' },
+        { part: 'APU Gearbox', remaining: '3,200 hours to overhaul' },
       ],
     },
     
     airworthiness: {
       upcomingCompliance: [
         { title: 'AD 2024-05 Fan Blade Inspection', dueIn: '36 days', type: 'AD' },
+        { title: 'AD 2024-12 Winglet Bolt Inspection', dueIn: '48 days', type: 'AD' },
         { title: 'SB A320-52-1234 Door Mod', dueIn: '65 days', type: 'SB' },
+        { title: 'Certificate of Airworthiness Renewal', dueIn: '89 days', type: 'Certificate' },
+        { title: 'SB A320-28-5678 Hydraulic Hose Replacement', dueIn: '120 days', type: 'SB' },
       ],
       overdue: [],
       melItems: [
         { item: 'IFE System Rows 15-18', deferredUntil: '2025-12-05' },
+        { item: 'PA System Aft Cabin', deferredUntil: '2025-11-30' },
       ],
     },
     
     inventory: {
       blockingParts: [
         { part: 'Oil Pump PN-0048', leadTime: '7 days', risk: 'medium' },
+        { part: 'Hydraulic Actuator PN-7734', leadTime: '14 days', risk: 'high' },
         { part: 'Hydraulic Filter PN-2341', leadTime: '3 days', risk: 'low' },
+        { part: 'Fan Blade Set PN-1123', leadTime: '10 days', risk: 'medium' },
       ],
       reservedParts: [
         { part: 'Brake Pack PN-9822', location: 'DXB Stores' },
         { part: 'APU Starter PN-5512', location: 'BOM Hub' },
+        { part: 'Main Landing Gear Actuator PN-6643', location: 'DXB Stores' },
+        { part: 'Engine Oil Filter PN-3321', location: 'DEL Hub' },
       ],
     },
     
@@ -268,6 +317,9 @@ export const mockAircraftProfiles: MockAircraftProfile[] = [
         { part: 'Brake Assembly', cost: 8500 },
         { part: 'APU Components', cost: 6200 },
         { part: 'Cabin Interior', cost: 4800 },
+        { part: 'Engine Oil & Filters', cost: 3200 },
+        { part: 'Landing Gear Parts', cost: 2900 },
+        { part: 'Avionics Spares', cost: 2100 },
       ],
       forecastCost30d: 31000,
     },
@@ -276,11 +328,15 @@ export const mockAircraftProfiles: MockAircraftProfile[] = [
       recurringIssues: [
         { issue: 'Cabin noise in rows 20-25', count: 3 },
         { issue: 'Galley coffee maker intermittent', count: 2 },
+        { issue: 'Seat recline issue row 12F', count: 2 },
+        { issue: 'Overhead bin latch sticky 18C', count: 1 },
       ],
       fatigueRisk: 'low',
       observations: [
+        { date: '2025-11-24', note: 'Flight attendant reported galley oven not heating properly' },
         { date: '2025-11-22', note: 'Crew reported unusual smell in cabin during descent' },
         { date: '2025-11-20', note: 'Captain noted slight rudder trim issue' },
+        { date: '2025-11-19', note: 'Cabin crew reported PA system intermittent in rear cabin' },
       ],
     },
     
@@ -288,14 +344,24 @@ export const mockAircraftProfiles: MockAircraftProfile[] = [
       { timestamp: '2025-11-25 14:35', type: 'flight', description: 'Departed DXB for DOH' },
       { timestamp: '2025-11-25 08:20', type: 'maintenance', description: 'A-Check scheduled for 2025-12-15' },
       { timestamp: '2025-11-24 16:05', type: 'insight', description: 'AI flagged ENG1 vibration trend', actor: 'System' },
+      { timestamp: '2025-11-24 09:30', type: 'compliance', description: 'AD 2024-05 compliance reminder sent to planning' },
+      { timestamp: '2025-11-23 18:45', type: 'flight', description: 'Landed DXB from DEL, no defects reported' },
       { timestamp: '2025-11-23 11:30', type: 'defect', description: 'Defect D-456 closed (IFE issue)', actor: 'Tech Team' },
+      { timestamp: '2025-11-22 15:20', type: 'defect', description: 'New defect D-458 opened (Galley oven)', actor: 'Crew' },
       { timestamp: '2025-11-22 09:15', type: 'maintenance', description: 'Oil service completed', actor: 'Line Maintenance' },
+      { timestamp: '2025-11-21 14:00', type: 'compliance', description: 'Certificate of Airworthiness renewed' },
+      { timestamp: '2025-11-20 10:30', type: 'insight', description: 'Predictive alert: brake wear accelerating', actor: 'System' },
+      { timestamp: '2025-11-19 16:45', type: 'maintenance', description: 'Landing gear inspection completed', actor: 'Base Maintenance' },
+      { timestamp: '2025-11-18 08:00', type: 'flight', description: 'First flight after overnight maintenance' },
     ],
     
     actions: [
       { title: 'Open Central Task Board', description: 'Load tasks filtered to this aircraft', type: 'task' },
       { title: 'Trigger Early Check Prep', description: 'Start predictive maintenance playbook', type: 'playbook' },
+      { title: 'Run AOG Risk Assessment', description: 'Analyze critical spares and upcoming maintenance', type: 'playbook' },
       { title: 'Notify Ops Team', description: 'Send tail-specific operational alert', type: 'alert' },
+      { title: 'Schedule MRO Coordination', description: 'Book slots for upcoming AD compliance', type: 'playbook' },
+      { title: 'Generate Cost Forecast Report', description: 'Project 90-day maintenance spend', type: 'playbook' },
     ],
   },
   {
