@@ -548,7 +548,7 @@ export default function AircraftProfile() {
                   <CardHeader className="pb-2">
                     <CardDescription>Cost per Flight Hour</CardDescription>
                     <CardTitle className="text-2xl">
-                      ${aircraft.opsProfile.utilization30d > 0 ? Math.round(aircraft.financial.maintenanceCost90d / (aircraft.opsProfile.utilization30d * 3)) : 0}
+                      ${aircraft.opsProfile.utilization30dHours > 0 ? Math.round(aircraft.financial.maintenanceCost90d / (aircraft.opsProfile.utilization30dHours * 3)) : 0}
                     </CardTitle>
                   </CardHeader>
                 </Card>
@@ -608,25 +608,18 @@ export default function AircraftProfile() {
                 </Card>
               </div>
 
-              {aircraft.crew.observations.length > 0 && (
+              {aircraft.crew.notes && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Recent Observations</CardTitle>
+                    <CardTitle>Crew Notes</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {aircraft.crew.observations.map((obs, idx) => (
-                        <div key={idx} className="p-3 rounded-lg border">
-                          <p className="text-sm text-muted-foreground mb-1">{obs.date}</p>
-                          <p className="font-medium">{obs.note}</p>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-sm text-muted-foreground">{aircraft.crew.notes}</p>
                   </CardContent>
                 </Card>
               )}
 
-              {aircraft.crew.recurringIssues.length === 0 && aircraft.crew.observations.length === 0 && (
+              {aircraft.crew.recurringIssues.length === 0 && !aircraft.crew.notes && (
                 <Card>
                   <CardContent className="py-8 text-center">
                     <p className="text-muted-foreground">No crew reports</p>
@@ -651,11 +644,9 @@ export default function AircraftProfile() {
                         <div className="flex-1 pb-4">
                           <div className="flex items-start justify-between">
                             <div>
-                              <p className="font-medium">{event.description}</p>
-                              <p className="text-sm text-muted-foreground">{event.timestamp}</p>
-                              {event.actor && (
-                                <p className="text-xs text-muted-foreground mt-1">by {event.actor}</p>
-                              )}
+                              <p className="font-medium">{event.title}</p>
+                              <p className="text-sm text-muted-foreground">{event.description}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{event.timestamp}</p>
                             </div>
                             <Badge variant="outline">{event.type}</Badge>
                           </div>
@@ -681,12 +672,12 @@ export default function AircraftProfile() {
                             <CardTitle className="text-base">{action.title}</CardTitle>
                             <CardDescription className="mt-1">{action.description}</CardDescription>
                           </div>
-                          <Badge variant="outline">{action.type}</Badge>
+                          <Badge variant="outline">{action.label}</Badge>
                         </div>
                       </CardHeader>
                       <CardContent>
                         <Button size="sm" variant="default" className="w-full">
-                          {action.type === 'playbook' ? 'Run Playbook' : action.type === 'task' ? 'Open Tasks' : 'Send Alert'}
+                          {action.label === 'Playbook' ? 'Run Playbook' : action.label === 'Task' ? 'Open Tasks' : 'Send Notification'}
                         </Button>
                       </CardContent>
                     </Card>
