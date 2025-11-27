@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Package, AlertTriangle, CheckCircle, Clock, TrendingUp, MapPin, Plane, Lightbulb, Share2, ListTodo, DollarSign, AlertCircle, Eye, BarChart3, Network, Users, Zap } from "lucide-react";
+import { ArrowLeft, Package, AlertTriangle, CheckCircle, Clock, TrendingUp, MapPin, Plane, Lightbulb, Share2, ListTodo, DollarSign, AlertCircle, Eye, BarChart3, Network, Users, Zap, Calendar } from "lucide-react";
 import { getInventoryPart } from "@/data/mockInventory";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -448,6 +448,48 @@ export default function InventoryForecastingDetail() {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Historical Orders Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Historical Orders (Last 12 Months)</CardTitle>
+                  <CardDescription>
+                    Total orders: {part.historicalOrdersMonthly.reduce((sum, m) => sum + m.orders, 0)} units
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-40 flex items-end gap-1 border-b border-l border-border p-2">
+                    {part.historicalOrdersMonthly.map((month, idx) => {
+                      const maxOrders = Math.max(...part.historicalOrdersMonthly.map(m => m.orders), 1);
+                      return (
+                        <div key={idx} className="flex-1 flex flex-col items-center gap-1">
+                          <div
+                            className="w-full bg-primary/60 hover:bg-primary rounded-t transition-colors"
+                            style={{
+                              height: month.orders > 0 ? `${Math.max((month.orders / maxOrders) * 100, 10)}%` : '4px',
+                              minHeight: '4px'
+                            }}
+                            title={`${month.monthLabel}: ${month.orders} orders`}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                    <span>{part.historicalOrdersMonthly[0]?.monthLabel}</span>
+                    <span>{part.historicalOrdersMonthly[5]?.monthLabel}</span>
+                    <span>{part.historicalOrdersMonthly[11]?.monthLabel}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-4">
+                    {(() => {
+                      const orders = part.historicalOrdersMonthly;
+                      const peakMonth = orders.reduce((max, m) => m.orders > max.orders ? m : max, orders[0]);
+                      const avgOrders = orders.reduce((sum, m) => sum + m.orders, 0) / orders.length;
+                      return `Order history indicates ${peakMonth.orders > avgOrders * 1.5 ? 'clustered demand around ' + peakMonth.monthLabel : 'steady demand throughout the year'} with an average of ${avgOrders.toFixed(1)} units/month.`;
+                    })()}
+                  </p>
+                </CardContent>
+              </Card>
             </section>
 
             {/* Network Inventory Section */}
@@ -574,6 +616,50 @@ export default function InventoryForecastingDetail() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Unplanned Maintenance Cases */}
+              {part.unplannedMaintenanceEvents.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Unplanned Maintenance Cases Involving This Part</CardTitle>
+                    <CardDescription>Historical events where this part was involved in rectification</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Aircraft</TableHead>
+                          <TableHead>Event Type</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead className="text-center">Downtime</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {part.unplannedMaintenanceEvents.map((event, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell className="text-muted-foreground">{event.date}</TableCell>
+                            <TableCell className="font-mono font-medium">{event.aircraft}</TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={event.eventType === 'AOG event' ? 'destructive' : event.eventType === 'Unscheduled removal' ? 'outline' : 'secondary'}
+                                className="text-xs"
+                              >
+                                {event.eventType}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm">{event.description}</TableCell>
+                            <TableCell className="text-center font-medium">{event.downtimeHours}h</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    <p className="text-xs text-muted-foreground mt-4">
+                      {part.unplannedMaintenanceEvents.length} unplanned event{part.unplannedMaintenanceEvents.length !== 1 ? 's' : ''} in the last 12 months where this part was involved in rectification.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </section>
 
             {/* Financial Exposure Section */}
