@@ -17,7 +17,7 @@ export default function AircraftProfile() {
 
   const handleCreateTask = () => {
     toast({
-      title: "Task created (mock)",
+      title: "Task created",
       description: `A central task has been created for ${aircraft.registration} based on this signal.`,
     });
   };
@@ -33,14 +33,14 @@ export default function AircraftProfile() {
   const handleRunPlaybook = (playbookTitle: string) => {
     toast({
       title: "Playbook started",
-      description: `${playbookTitle} has been initiated for ${aircraft.registration} (mock).`,
+      description: `${playbookTitle} has been initiated for ${aircraft.registration}.`,
     });
   };
 
   const handleSendNotification = () => {
     toast({
       title: "Notification initiated",
-      description: `Tail specific notification to Ops for ${aircraft.registration} has been queued (mock).`,
+      description: `Tail specific notification to Ops for ${aircraft.registration} has been queued.`,
     });
   };
 

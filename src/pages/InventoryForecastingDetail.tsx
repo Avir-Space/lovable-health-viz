@@ -10,12 +10,54 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CostForecastSimulatorDrawer } from "@/components/inventory/CostForecastSimulatorDrawer";
+import { useToast } from "@/hooks/use-toast";
 
 export default function InventoryForecastingDetail() {
   const { partNumber } = useParams<{ partNumber: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const part = getInventoryPart(decodeURIComponent(partNumber || ""));
+
+  const handleShareForecast = () => {
+    toast({
+      title: "Forecast shared",
+      description: `The forecast for ${part?.partNumber} has been shared successfully.`,
+    });
+  };
+
+  const handleOpenCentralTasks = () => {
+    navigate('/central-tasks');
+  };
+
+  const handleCreateTask = () => {
+    toast({
+      title: "Task created",
+      description: `A new task has been created based on this part's forecast.`,
+    });
+  };
+
+  const handlePlaybookCreateTask = () => {
+    toast({
+      title: "Task created",
+      description: `A task has been created for ${part?.partNumber} based on this recommendation.`,
+    });
+  };
+
+  const handleCostForecastSimulation = () => {
+    toast({
+      title: "Simulation started",
+      description: `Cost forecast simulation initiated for ${part?.partNumber}.`,
+    });
+    setSimulatorOpen(true);
+  };
+
+  const handleNotifyBaseStores = () => {
+    toast({
+      title: "Notification sent",
+      description: `Base stores have been notified about ${part?.partNumber}.`,
+    });
+  };
 
   const sections = [
     { id: 'overview', label: 'Overview', icon: Eye },
@@ -114,13 +156,13 @@ export default function InventoryForecastingDetail() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleShareForecast}>
                 <Share2 className="h-4 w-4 mr-2" /> Share Forecast
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleOpenCentralTasks}>
                 <ListTodo className="h-4 w-4 mr-2" /> Open in Central Tasks
               </Button>
-              <Button size="sm">
+              <Button size="sm" onClick={handleCreateTask}>
                 Create Task
               </Button>
             </div>
@@ -795,7 +837,7 @@ export default function InventoryForecastingDetail() {
                           <span className="text-green-600">{formatCurrency(Math.round(potentialSavings / part.recommendedActions.length))}</span>
                         </div>
                       </div>
-                      <Button size="sm" variant="outline" className="w-full mt-4">
+                      <Button size="sm" variant="outline" className="w-full mt-4" onClick={handlePlaybookCreateTask}>
                         Create Task
                       </Button>
                     </CardContent>
@@ -811,10 +853,10 @@ export default function InventoryForecastingDetail() {
                       <p className="text-sm text-muted-foreground">Run a cost forecast simulation or notify base stores directly.</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setSimulatorOpen(true)}>
+                      <Button variant="outline" size="sm" onClick={handleCostForecastSimulation}>
                         Cost Forecast Simulation
                       </Button>
-                      <Button variant="outline" size="sm">Notify Base Stores</Button>
+                      <Button variant="outline" size="sm" onClick={handleNotifyBaseStores}>Notify Base Stores</Button>
                     </div>
                   </div>
                 </CardContent>
