@@ -477,7 +477,12 @@ export default function AircraftProfile() {
 
             {/* Inventory */}
             <section id="inventory" className="space-y-4">
-              <h2 className="text-xl font-semibold">Inventory & Spares</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Inventory & Spares</h2>
+                <Button variant="outline" size="sm" onClick={() => navigate('/inventory-forecasting')}>
+                  View All Forecasts
+                </Button>
+              </div>
               
               {aircraft.inventory.blockingParts.length > 0 && (
                 <Card>
@@ -492,7 +497,16 @@ export default function AircraftProfile() {
                             <p className="font-medium">{part.partNumber} - {part.description}</p>
                             <p className="text-sm text-muted-foreground">Lead time: {part.leadTimeDays} days</p>
                           </div>
-                          <Badge variant={getRiskColor(part.risk)}>{part.risk.toUpperCase()}</Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={getRiskColor(part.risk)}>{part.risk.toUpperCase()}</Badge>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => navigate(`/inventory-forecasting/${encodeURIComponent(part.partNumber)}`)}
+                            >
+                              View Forecast
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -509,8 +523,17 @@ export default function AircraftProfile() {
                     <div className="space-y-2">
                       {aircraft.inventory.reservedParts.map((part, idx) => (
                         <div key={idx} className="flex items-center justify-between p-3 rounded-lg border">
-                          <p className="font-medium">{part.partNumber} - {part.description}</p>
-                          <Badge variant="outline">{part.location}</Badge>
+                          <div>
+                            <p className="font-medium">{part.partNumber} - {part.description}</p>
+                            <Badge variant="outline" className="mt-1">{part.location}</Badge>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => navigate(`/inventory-forecasting/${encodeURIComponent(part.partNumber)}`)}
+                          >
+                            View Forecast
+                          </Button>
                         </div>
                       ))}
                     </div>

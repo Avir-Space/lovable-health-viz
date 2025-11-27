@@ -1,4 +1,4 @@
-import { Home, BarChart3, TrendingUp, Settings, Shield, ChevronDown, ListChecks, Plane } from "lucide-react";
+import { Home, BarChart3, TrendingUp, Settings, Shield, ChevronDown, ListChecks, Plane, Package } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -19,6 +19,7 @@ const navItems = [
   { title: "Overall Impact", url: "/overall-impact", icon: TrendingUp },
   { title: "Central Tasks", url: "/central-tasks", icon: ListChecks },
   { title: "Aircraft Management", url: "/aircraft", icon: Plane },
+  { title: "Inventory Forecasting", url: "/inventory-forecasting", icon: Package },
 ];
 
 const predefinedDashboards = [

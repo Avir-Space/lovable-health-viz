@@ -24,6 +24,8 @@ import CrewDutySnapshot from "./pages/dashboards/CrewDutySnapshot";
 import CentralTasks from "./pages/CentralTasks";
 import Aircraft from "./pages/Aircraft";
 import AircraftProfile from "./pages/AircraftProfile";
+import InventoryForecasting from "./pages/InventoryForecasting";
+import InventoryForecastingDetail from "./pages/InventoryForecastingDetail";
 import NotFound from "./pages/NotFound";
 import KpiSelfTest from "./components/KpiSelfTest";
 
@@ -50,6 +52,8 @@ const App = () => (
               <Route path="/central-tasks" element={<CentralTasks />} />
               <Route path="/aircraft" element={<Aircraft />} />
               <Route path="/aircraft/:aircraftId" element={<AircraftProfile />} />
+              <Route path="/inventory-forecasting" element={<InventoryForecasting />} />
+              <Route path="/inventory-forecasting/:partNumber" element={<InventoryForecastingDetail />} />
               <Route path="/settings" element={<Settings />} />
                     <Route path="/admin" element={<Admin />} />
                     <Route path="/dashboards/maintenance-health-overview" element={<MaintenanceHealthOverview />} />
