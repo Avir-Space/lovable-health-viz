@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Package, AlertTriangle, CheckCircle, Clock, TrendingUp, MapPin, Plane, Lightbulb, Share2, ListTodo } from "lucide-react";
+import { ArrowLeft, Package, AlertTriangle, CheckCircle, Clock, TrendingUp, MapPin, Plane, Lightbulb, Share2, ListTodo, DollarSign, AlertCircle } from "lucide-react";
 import { getInventoryPart } from "@/data/mockInventory";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,21 +40,27 @@ export default function InventoryForecastingDetail() {
   };
 
   const stockPercentage = Math.min((part.currentStock / part.minRequired) * 100, 100);
-  const daysUntilShortage = part.forecastDemand30d > 0 
-    ? Math.round((part.currentStock / part.forecastDemand30d) * 30) 
-    : 999;
   const networkAvailability = Math.round(
     (part.bases.reduce((sum, b) => sum + b.stock + b.inbound - b.outbound, 0) / part.minRequired) * 100
   );
-  const aogProbability = part.risk === "high" ? 35 : part.risk === "medium" ? 12 : 3;
 
-  // Mock demand curve data points for chart
-  const demandCurve = Array.from({ length: 30 }, (_, i) => {
-    const base = part.forecastDemand30d / 30;
-    const variance = Math.sin(i * 0.3) * (base * 0.3);
-    return Math.max(0, base + variance);
+  // Calculate cumulative demand to find shortage day
+  let cumulativeDemand = 0;
+  const shortageDay = part.dailyDemand30d.findIndex((demand) => {
+    cumulativeDemand += demand;
+    return cumulativeDemand > part.currentStock;
   });
-  const maxDemand = Math.max(...demandCurve);
+
+  const maxDailyDemand = Math.max(...part.dailyDemand30d, 1);
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -131,47 +137,131 @@ export default function InventoryForecastingDetail() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Days Until Shortage</CardDescription>
-            <CardTitle className={`text-2xl ${daysUntilShortage < 30 ? 'text-destructive' : daysUntilShortage < 60 ? 'text-amber-600' : ''}`}>
-              {daysUntilShortage > 90 ? '90+' : daysUntilShortage} days
+            <CardTitle className={`text-2xl ${part.daysUntilShortage < 30 ? 'text-destructive' : part.daysUntilShortage < 60 ? 'text-amber-600' : ''}`}>
+              {part.daysUntilShortage > 90 ? '90+' : part.daysUntilShortage} days
             </CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>AOG Probability</CardDescription>
-            <CardTitle className={`text-2xl ${aogProbability > 25 ? 'text-destructive' : aogProbability > 10 ? 'text-amber-600' : ''}`}>
-              {aogProbability}%
+            <CardTitle className={`text-2xl ${part.aogProbabilityPercent > 25 ? 'text-destructive' : part.aogProbabilityPercent > 10 ? 'text-amber-600' : ''}`}>
+              {part.aogProbabilityPercent}%
             </CardTitle>
           </CardHeader>
         </Card>
       </div>
 
+      {/* Impact Section */}
+      <div>
+        <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4" />
+          Impact (Next 30–90 Days)
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="bg-muted/30">
+            <CardHeader className="pb-2">
+              <CardDescription className="flex items-center gap-1">
+                <Plane className="h-3 w-3" />
+                Aircraft at Risk (30d)
+              </CardDescription>
+              <CardTitle className={`text-2xl ${part.aircraftAtRisk30d > 0 ? 'text-destructive' : ''}`}>
+                {part.aircraftAtRisk30d}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-xs text-muted-foreground">tails that could be impacted by shortage</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-muted/30">
+            <CardHeader className="pb-2">
+              <CardDescription className="flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                Flights at Risk (30d)
+              </CardDescription>
+              <CardTitle className={`text-2xl ${part.flightsAtRisk30d > 0 ? 'text-amber-600' : ''}`}>
+                {part.flightsAtRisk30d}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-xs text-muted-foreground">potentially disrupted departures</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-muted/30">
+            <CardHeader className="pb-2">
+              <CardDescription className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Maintenance Events (90d)
+              </CardDescription>
+              <CardTitle className="text-2xl">
+                {part.maintenanceEventsAtRisk90d}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-xs text-muted-foreground">checks / tasks depending on this part</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-muted/30">
+            <CardHeader className="pb-2">
+              <CardDescription className="flex items-center gap-1">
+                <DollarSign className="h-3 w-3" />
+                Cost Exposure (90d)
+              </CardDescription>
+              <CardTitle className={`text-2xl ${part.projectedCostExposure90dUsd > 100000 ? 'text-destructive' : part.projectedCostExposure90dUsd > 50000 ? 'text-amber-600' : ''}`}>
+                {formatCurrency(part.projectedCostExposure90dUsd)}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-xs text-muted-foreground">estimated spend or disruption cost</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Forecast Chart */}
+        {/* Forecast Chart - using dailyDemand30d */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
               30-Day Demand Forecast
             </CardTitle>
-            <CardDescription>Predicted daily demand based on fleet activity and maintenance schedules</CardDescription>
+            <CardDescription>
+              Predicted daily demand based on AVIR analysis · Total: {part.dailyDemand30d.reduce((a, b) => a + b, 0)} units
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-48 flex items-end gap-1 border-b border-l border-border p-2">
-              {demandCurve.map((value, idx) => (
-                <div
-                  key={idx}
-                  className="flex-1 bg-primary/60 hover:bg-primary transition-colors rounded-t"
-                  style={{ height: `${(value / maxDemand) * 100}%`, minHeight: '4px' }}
-                  title={`Day ${idx + 1}: ${value.toFixed(2)} units`}
-                />
-              ))}
+            <div className="h-48 flex items-end gap-[2px] border-b border-l border-border p-2">
+              {part.dailyDemand30d.map((value, idx) => {
+                const isAfterShortage = shortageDay !== -1 && idx >= shortageDay;
+                return (
+                  <div
+                    key={idx}
+                    className={`flex-1 rounded-t transition-colors ${
+                      isAfterShortage 
+                        ? 'bg-destructive/70 hover:bg-destructive' 
+                        : 'bg-primary/60 hover:bg-primary'
+                    }`}
+                    style={{ 
+                      height: value > 0 ? `${Math.max((value / maxDailyDemand) * 100, 15)}%` : '4px',
+                      minHeight: '4px'
+                    }}
+                    title={`Day ${idx + 1}: ${value} unit${value !== 1 ? 's' : ''}${isAfterShortage ? ' (after shortage)' : ''}`}
+                  />
+                );
+              })}
             </div>
             <div className="flex justify-between text-xs text-muted-foreground mt-2">
               <span>Day 1</span>
               <span>Day 15</span>
               <span>Day 30</span>
             </div>
+            {shortageDay !== -1 && (
+              <p className="text-xs text-destructive mt-2 flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                Stock depleted on Day {shortageDay + 1} based on current forecast
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -222,7 +312,7 @@ export default function InventoryForecastingDetail() {
             <Plane className="h-5 w-5" />
             Usage Drivers
           </CardTitle>
-          <CardDescription>Predicted consumption by aircraft based on AI analysis</CardDescription>
+          <CardDescription>Predicted consumption by aircraft based on AVIR analysis</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -230,7 +320,7 @@ export default function InventoryForecastingDetail() {
               <TableRow>
                 <TableHead>Aircraft</TableHead>
                 <TableHead>Fleet Type</TableHead>
-                <TableHead className="text-center">Predicted Failures</TableHead>
+                <TableHead className="text-center">Failure Probability</TableHead>
                 <TableHead className="text-center">Predicted Replacements</TableHead>
                 <TableHead className="text-center">Confidence</TableHead>
               </TableRow>
@@ -265,7 +355,7 @@ export default function InventoryForecastingDetail() {
             <Lightbulb className="h-5 w-5" />
             Recommended Actions
           </CardTitle>
-          <CardDescription>AI-generated recommendations based on forecast analysis</CardDescription>
+          <CardDescription>AI-generated playbooks to reduce AOG risk and unnecessary spend</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
