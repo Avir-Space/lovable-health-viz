@@ -20,6 +20,21 @@ export type InventoryForecastPart = {
   maintenanceEventsAtRisk90d: number;
   projectedCostExposure90dUsd: number;
 
+  // Historical orders (last 12 months)
+  historicalOrdersMonthly: {
+    monthLabel: string;
+    orders: number;
+  }[];
+
+  // Unplanned maintenance events
+  unplannedMaintenanceEvents: {
+    date: string;
+    aircraft: string;
+    eventType: string;
+    description: string;
+    downtimeHours: number;
+  }[];
+
   bases: {
     base: string;
     stock: number;
@@ -58,6 +73,26 @@ export const mockInventoryParts: InventoryForecastPart[] = [
     flightsAtRisk30d: 28,
     maintenanceEventsAtRisk90d: 5,
     projectedCostExposure90dUsd: 145000,
+    historicalOrdersMonthly: [
+      { monthLabel: "Dec 2024", orders: 1 },
+      { monthLabel: "Jan 2025", orders: 0 },
+      { monthLabel: "Feb 2025", orders: 2 },
+      { monthLabel: "Mar 2025", orders: 1 },
+      { monthLabel: "Apr 2025", orders: 0 },
+      { monthLabel: "May 2025", orders: 1 },
+      { monthLabel: "Jun 2025", orders: 0 },
+      { monthLabel: "Jul 2025", orders: 3 },
+      { monthLabel: "Aug 2025", orders: 2 },
+      { monthLabel: "Sep 2025", orders: 1 },
+      { monthLabel: "Oct 2025", orders: 1 },
+      { monthLabel: "Nov 2025", orders: 0 },
+    ],
+    unplannedMaintenanceEvents: [
+      { date: "2025-09-12", aircraft: "VT-AVR", eventType: "Unscheduled removal", description: "Hydraulic actuator leak on landing gear", downtimeHours: 6 },
+      { date: "2025-07-03", aircraft: "VT-BXR", eventType: "AOG event", description: "Actuator failure during pushback", downtimeHours: 11 },
+      { date: "2025-05-21", aircraft: "VT-CDE", eventType: "Line maintenance", description: "High-pressure line vibration inspection", downtimeHours: 3 },
+      { date: "2025-02-14", aircraft: "VT-AVR", eventType: "Unscheduled removal", description: "Hydraulic seal degradation detected", downtimeHours: 8 },
+    ],
     bases: [
       { base: "DXB", stock: 1, inbound: 2, outbound: 1 },
       { base: "BOM", stock: 2, inbound: 0, outbound: 1 },
@@ -91,6 +126,24 @@ export const mockInventoryParts: InventoryForecastPart[] = [
     flightsAtRisk30d: 0,
     maintenanceEventsAtRisk90d: 1,
     projectedCostExposure90dUsd: 12000,
+    historicalOrdersMonthly: [
+      { monthLabel: "Dec 2024", orders: 0 },
+      { monthLabel: "Jan 2025", orders: 1 },
+      { monthLabel: "Feb 2025", orders: 0 },
+      { monthLabel: "Mar 2025", orders: 1 },
+      { monthLabel: "Apr 2025", orders: 0 },
+      { monthLabel: "May 2025", orders: 0 },
+      { monthLabel: "Jun 2025", orders: 1 },
+      { monthLabel: "Jul 2025", orders: 0 },
+      { monthLabel: "Aug 2025", orders: 1 },
+      { monthLabel: "Sep 2025", orders: 0 },
+      { monthLabel: "Oct 2025", orders: 1 },
+      { monthLabel: "Nov 2025", orders: 0 },
+    ],
+    unplannedMaintenanceEvents: [
+      { date: "2025-06-18", aircraft: "VT-AVR", eventType: "Line maintenance", description: "Oil pressure fluctuation investigation", downtimeHours: 2 },
+      { date: "2025-03-05", aircraft: "VT-FGH", eventType: "Scheduled replacement", description: "Routine pump replacement during C-check", downtimeHours: 0 },
+    ],
     bases: [
       { base: "DXB", stock: 3, inbound: 1, outbound: 0 },
       { base: "BOM", stock: 2, inbound: 0, outbound: 1 },
@@ -121,6 +174,24 @@ export const mockInventoryParts: InventoryForecastPart[] = [
     flightsAtRisk30d: 8,
     maintenanceEventsAtRisk90d: 3,
     projectedCostExposure90dUsd: 28000,
+    historicalOrdersMonthly: [
+      { monthLabel: "Dec 2024", orders: 4 },
+      { monthLabel: "Jan 2025", orders: 5 },
+      { monthLabel: "Feb 2025", orders: 4 },
+      { monthLabel: "Mar 2025", orders: 6 },
+      { monthLabel: "Apr 2025", orders: 4 },
+      { monthLabel: "May 2025", orders: 5 },
+      { monthLabel: "Jun 2025", orders: 4 },
+      { monthLabel: "Jul 2025", orders: 5 },
+      { monthLabel: "Aug 2025", orders: 6 },
+      { monthLabel: "Sep 2025", orders: 4 },
+      { monthLabel: "Oct 2025", orders: 5 },
+      { monthLabel: "Nov 2025", orders: 4 },
+    ],
+    unplannedMaintenanceEvents: [
+      { date: "2025-08-22", aircraft: "VT-AVR", eventType: "Line maintenance", description: "Filter element replacement due to contamination", downtimeHours: 1 },
+      { date: "2025-04-10", aircraft: "VT-BXR", eventType: "Line maintenance", description: "Early filter change due to debris detection", downtimeHours: 1 },
+    ],
     bases: [
       { base: "DXB", stock: 10, inbound: 8, outbound: 6 },
       { base: "BOM", stock: 8, inbound: 4, outbound: 4 },
@@ -153,6 +224,25 @@ export const mockInventoryParts: InventoryForecastPart[] = [
     flightsAtRisk30d: 18,
     maintenanceEventsAtRisk90d: 2,
     projectedCostExposure90dUsd: 185000,
+    historicalOrdersMonthly: [
+      { monthLabel: "Dec 2024", orders: 0 },
+      { monthLabel: "Jan 2025", orders: 0 },
+      { monthLabel: "Feb 2025", orders: 1 },
+      { monthLabel: "Mar 2025", orders: 0 },
+      { monthLabel: "Apr 2025", orders: 0 },
+      { monthLabel: "May 2025", orders: 1 },
+      { monthLabel: "Jun 2025", orders: 0 },
+      { monthLabel: "Jul 2025", orders: 0 },
+      { monthLabel: "Aug 2025", orders: 0 },
+      { monthLabel: "Sep 2025", orders: 1 },
+      { monthLabel: "Oct 2025", orders: 0 },
+      { monthLabel: "Nov 2025", orders: 0 },
+    ],
+    unplannedMaintenanceEvents: [
+      { date: "2025-09-05", aircraft: "VT-AVR", eventType: "AOG event", description: "APU failed to start during ground ops", downtimeHours: 14 },
+      { date: "2025-05-12", aircraft: "VT-XYZ", eventType: "Unscheduled removal", description: "Abnormal starter motor vibration", downtimeHours: 8 },
+      { date: "2025-02-28", aircraft: "VT-AVR", eventType: "Line maintenance", description: "APU start sequence anomaly investigation", downtimeHours: 4 },
+    ],
     bases: [
       { base: "DXB", stock: 1, inbound: 1, outbound: 0 },
       { base: "BOM", stock: 1, inbound: 0, outbound: 1 },
@@ -185,6 +275,23 @@ export const mockInventoryParts: InventoryForecastPart[] = [
     flightsAtRisk30d: 0,
     maintenanceEventsAtRisk90d: 0,
     projectedCostExposure90dUsd: 8500,
+    historicalOrdersMonthly: [
+      { monthLabel: "Dec 2024", orders: 1 },
+      { monthLabel: "Jan 2025", orders: 0 },
+      { monthLabel: "Feb 2025", orders: 1 },
+      { monthLabel: "Mar 2025", orders: 1 },
+      { monthLabel: "Apr 2025", orders: 0 },
+      { monthLabel: "May 2025", orders: 1 },
+      { monthLabel: "Jun 2025", orders: 0 },
+      { monthLabel: "Jul 2025", orders: 1 },
+      { monthLabel: "Aug 2025", orders: 1 },
+      { monthLabel: "Sep 2025", orders: 0 },
+      { monthLabel: "Oct 2025", orders: 1 },
+      { monthLabel: "Nov 2025", orders: 1 },
+    ],
+    unplannedMaintenanceEvents: [
+      { date: "2025-07-15", aircraft: "VT-CDE", eventType: "Line maintenance", description: "Brake wear inspection exceeded limits", downtimeHours: 2 },
+    ],
     bases: [
       { base: "DXB", stock: 4, inbound: 2, outbound: 1 },
       { base: "BOM", stock: 2, inbound: 1, outbound: 1 },
@@ -216,6 +323,24 @@ export const mockInventoryParts: InventoryForecastPart[] = [
     flightsAtRisk30d: 6,
     maintenanceEventsAtRisk90d: 2,
     projectedCostExposure90dUsd: 52000,
+    historicalOrdersMonthly: [
+      { monthLabel: "Dec 2024", orders: 0 },
+      { monthLabel: "Jan 2025", orders: 1 },
+      { monthLabel: "Feb 2025", orders: 0 },
+      { monthLabel: "Mar 2025", orders: 0 },
+      { monthLabel: "Apr 2025", orders: 1 },
+      { monthLabel: "May 2025", orders: 0 },
+      { monthLabel: "Jun 2025", orders: 1 },
+      { monthLabel: "Jul 2025", orders: 0 },
+      { monthLabel: "Aug 2025", orders: 0 },
+      { monthLabel: "Sep 2025", orders: 1 },
+      { monthLabel: "Oct 2025", orders: 0 },
+      { monthLabel: "Nov 2025", orders: 1 },
+    ],
+    unplannedMaintenanceEvents: [
+      { date: "2025-09-18", aircraft: "VT-AVR", eventType: "Unscheduled removal", description: "Bleed air leak detected during preflight", downtimeHours: 5 },
+      { date: "2025-06-02", aircraft: "VT-FGH", eventType: "Line maintenance", description: "Valve sticking during engine start", downtimeHours: 3 },
+    ],
     bases: [
       { base: "DXB", stock: 2, inbound: 1, outbound: 1 },
       { base: "BOM", stock: 1, inbound: 0, outbound: 0 },
@@ -247,6 +372,23 @@ export const mockInventoryParts: InventoryForecastPart[] = [
     flightsAtRisk30d: 0,
     maintenanceEventsAtRisk90d: 1,
     projectedCostExposure90dUsd: 15000,
+    historicalOrdersMonthly: [
+      { monthLabel: "Dec 2024", orders: 0 },
+      { monthLabel: "Jan 2025", orders: 0 },
+      { monthLabel: "Feb 2025", orders: 1 },
+      { monthLabel: "Mar 2025", orders: 0 },
+      { monthLabel: "Apr 2025", orders: 0 },
+      { monthLabel: "May 2025", orders: 0 },
+      { monthLabel: "Jun 2025", orders: 0 },
+      { monthLabel: "Jul 2025", orders: 1 },
+      { monthLabel: "Aug 2025", orders: 0 },
+      { monthLabel: "Sep 2025", orders: 0 },
+      { monthLabel: "Oct 2025", orders: 0 },
+      { monthLabel: "Nov 2025", orders: 0 },
+    ],
+    unplannedMaintenanceEvents: [
+      { date: "2025-07-20", aircraft: "VT-CDE", eventType: "Line maintenance", description: "Cabin altitude fluctuation investigation", downtimeHours: 3 },
+    ],
     bases: [
       { base: "DXB", stock: 2, inbound: 0, outbound: 0 },
       { base: "BOM", stock: 1, inbound: 0, outbound: 0 },
@@ -276,6 +418,25 @@ export const mockInventoryParts: InventoryForecastPart[] = [
     flightsAtRisk30d: 42,
     maintenanceEventsAtRisk90d: 3,
     projectedCostExposure90dUsd: 320000,
+    historicalOrdersMonthly: [
+      { monthLabel: "Dec 2024", orders: 0 },
+      { monthLabel: "Jan 2025", orders: 1 },
+      { monthLabel: "Feb 2025", orders: 0 },
+      { monthLabel: "Mar 2025", orders: 0 },
+      { monthLabel: "Apr 2025", orders: 0 },
+      { monthLabel: "May 2025", orders: 1 },
+      { monthLabel: "Jun 2025", orders: 0 },
+      { monthLabel: "Jul 2025", orders: 0 },
+      { monthLabel: "Aug 2025", orders: 1 },
+      { monthLabel: "Sep 2025", orders: 0 },
+      { monthLabel: "Oct 2025", orders: 1 },
+      { monthLabel: "Nov 2025", orders: 0 },
+    ],
+    unplannedMaintenanceEvents: [
+      { date: "2025-10-02", aircraft: "VT-AVR", eventType: "AOG event", description: "Primary flight display failure", downtimeHours: 18 },
+      { date: "2025-08-15", aircraft: "VT-BXR", eventType: "Unscheduled removal", description: "Display unit intermittent blank screen", downtimeHours: 6 },
+      { date: "2025-05-08", aircraft: "VT-XYZ", eventType: "Line maintenance", description: "Display brightness degradation", downtimeHours: 2 },
+    ],
     bases: [
       { base: "DXB", stock: 1, inbound: 1, outbound: 1 },
       { base: "BOM", stock: 1, inbound: 0, outbound: 0 },
@@ -309,6 +470,21 @@ export const mockInventoryParts: InventoryForecastPart[] = [
     flightsAtRisk30d: 0,
     maintenanceEventsAtRisk90d: 0,
     projectedCostExposure90dUsd: 4500,
+    historicalOrdersMonthly: [
+      { monthLabel: "Dec 2024", orders: 12 },
+      { monthLabel: "Jan 2025", orders: 15 },
+      { monthLabel: "Feb 2025", orders: 14 },
+      { monthLabel: "Mar 2025", orders: 13 },
+      { monthLabel: "Apr 2025", orders: 16 },
+      { monthLabel: "May 2025", orders: 14 },
+      { monthLabel: "Jun 2025", orders: 15 },
+      { monthLabel: "Jul 2025", orders: 17 },
+      { monthLabel: "Aug 2025", orders: 16 },
+      { monthLabel: "Sep 2025", orders: 14 },
+      { monthLabel: "Oct 2025", orders: 15 },
+      { monthLabel: "Nov 2025", orders: 13 },
+    ],
+    unplannedMaintenanceEvents: [],
     bases: [
       { base: "DXB", stock: 50, inbound: 20, outbound: 15 },
       { base: "BOM", stock: 40, inbound: 10, outbound: 15 },
@@ -338,6 +514,24 @@ export const mockInventoryParts: InventoryForecastPart[] = [
     flightsAtRisk30d: 12,
     maintenanceEventsAtRisk90d: 4,
     projectedCostExposure90dUsd: 45000,
+    historicalOrdersMonthly: [
+      { monthLabel: "Dec 2024", orders: 1 },
+      { monthLabel: "Jan 2025", orders: 1 },
+      { monthLabel: "Feb 2025", orders: 0 },
+      { monthLabel: "Mar 2025", orders: 2 },
+      { monthLabel: "Apr 2025", orders: 1 },
+      { monthLabel: "May 2025", orders: 0 },
+      { monthLabel: "Jun 2025", orders: 1 },
+      { monthLabel: "Jul 2025", orders: 2 },
+      { monthLabel: "Aug 2025", orders: 1 },
+      { monthLabel: "Sep 2025", orders: 1 },
+      { monthLabel: "Oct 2025", orders: 0 },
+      { monthLabel: "Nov 2025", orders: 1 },
+    ],
+    unplannedMaintenanceEvents: [
+      { date: "2025-07-28", aircraft: "VT-AVR", eventType: "Line maintenance", description: "Tire change due to FOD damage", downtimeHours: 2 },
+      { date: "2025-03-15", aircraft: "VT-BXR", eventType: "Line maintenance", description: "Nose tire wear limit exceeded", downtimeHours: 1 },
+    ],
     bases: [
       { base: "DXB", stock: 3, inbound: 2, outbound: 2 },
       { base: "BOM", stock: 2, inbound: 1, outbound: 1 },
