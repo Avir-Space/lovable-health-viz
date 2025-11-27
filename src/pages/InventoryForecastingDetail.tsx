@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Package, AlertTriangle, CheckCircle, Clock, TrendingUp, MapPin, Plane, Lightbulb, Share2, ListTodo, DollarSign, AlertCircle, Eye, BarChart3, Network, Users, Zap } from "lucide-react";
 import { getInventoryPart } from "@/data/mockInventory";
@@ -8,10 +9,12 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { CostForecastSimulatorDrawer } from "@/components/inventory/CostForecastSimulatorDrawer";
 
 export default function InventoryForecastingDetail() {
   const { partNumber } = useParams<{ partNumber: string }>();
   const navigate = useNavigate();
+  const [simulatorOpen, setSimulatorOpen] = useState(false);
   const part = getInventoryPart(decodeURIComponent(partNumber || ""));
 
   const sections = [
@@ -722,7 +725,9 @@ export default function InventoryForecastingDetail() {
                       <p className="text-sm text-muted-foreground">Run a cost forecast simulation or notify base stores directly.</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">Cost Forecast Simulation</Button>
+                      <Button variant="outline" size="sm" onClick={() => setSimulatorOpen(true)}>
+                        Cost Forecast Simulation
+                      </Button>
                       <Button variant="outline" size="sm">Notify Base Stores</Button>
                     </div>
                   </div>
@@ -733,6 +738,13 @@ export default function InventoryForecastingDetail() {
           </div>
         </ScrollArea>
       </div>
+
+      {/* Cost Forecast Simulator Drawer */}
+      <CostForecastSimulatorDrawer
+        open={simulatorOpen}
+        onOpenChange={setSimulatorOpen}
+        partNumber={part.partNumber}
+      />
     </div>
   );
 }
