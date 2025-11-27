@@ -7,11 +7,46 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { getAircraftProfile } from '@/data/mockAircraftProfiles';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AircraftProfile() {
   const { aircraftId } = useParams<{ aircraftId: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const aircraft = getAircraftProfile(aircraftId || 'default');
+
+  const handleCreateTask = () => {
+    toast({
+      title: "Task created (mock)",
+      description: `A central task has been created for ${aircraft.registration} based on this signal.`,
+    });
+  };
+
+  const handleOpenSourceDashboard = () => {
+    window.open(
+      'https://prd-ca.aircraftms.com/wicket/bookmarkable/com.ams.screen.t.a.W?111&bean.target.id=1024767&prev1_page=com.ams.screen.t.a.p&prev1_title=Maintenance+Program',
+      '_blank',
+      'noopener,noreferrer'
+    );
+  };
+
+  const handleRunPlaybook = (playbookTitle: string) => {
+    toast({
+      title: "Playbook started",
+      description: `${playbookTitle} has been initiated for ${aircraft.registration} (mock).`,
+    });
+  };
+
+  const handleSendNotification = () => {
+    toast({
+      title: "Notification initiated",
+      description: `Tail specific notification to Ops for ${aircraft.registration} has been queued (mock).`,
+    });
+  };
+
+  const handleOpenTasks = () => {
+    navigate('/central-tasks');
+  };
 
   const sections = [
     { id: 'signals', label: 'Signals', icon: AlertTriangle },
@@ -166,8 +201,8 @@ export default function AircraftProfile() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="default">Create Task</Button>
-                        <Button size="sm" variant="outline">Open Source Dashboard</Button>
+                        <Button size="sm" variant="default" onClick={handleCreateTask}>Create Task</Button>
+                        <Button size="sm" variant="outline" onClick={handleOpenSourceDashboard}>Open Source Dashboard</Button>
                       </div>
                       <p className="text-sm text-muted-foreground mt-3">
                         <strong>Recommended:</strong> {signal.recommendation}
@@ -699,7 +734,20 @@ export default function AircraftProfile() {
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <Button size="sm" variant="default" className="w-full">
+                        <Button 
+                          size="sm" 
+                          variant="default" 
+                          className="w-full"
+                          onClick={() => {
+                            if (action.label === 'Playbook') {
+                              handleRunPlaybook(action.title);
+                            } else if (action.label === 'Task') {
+                              handleOpenTasks();
+                            } else {
+                              handleSendNotification();
+                            }
+                          }}
+                        >
                           {action.label === 'Playbook' ? 'Run Playbook' : action.label === 'Task' ? 'Open Tasks' : 'Send Notification'}
                         </Button>
                       </CardContent>
