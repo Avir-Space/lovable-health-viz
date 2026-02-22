@@ -5,10 +5,6 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://vaisaehgkgwozxazykjn.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhaXNhZWhna2d3b3p4YXp5a2puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwMDYzMzYsImV4cCI6MjA3NjU4MjMzNn0.jSNdAKwMAHdx2c97GnvwSTyGWOmC-Nu9qH8G9wL02QU";
 
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  console.warn('[AVIR] Supabase URL/KEY missing. Frontend will use safe fallback data.');
-}
-
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
