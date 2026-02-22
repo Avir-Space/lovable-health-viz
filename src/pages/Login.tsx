@@ -36,11 +36,9 @@ export default function Login() {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
       if (signInError) {
-        // Auto-create demo account on first use
-        if (email === DEMO_EMAIL && signInError.message.includes('Invalid login credentials')) {
-          const { error: signUpError } = await supabase.auth.signUp({ email, password });
-          if (signUpError) throw signUpError;
-          // Try signing in again after signup
+        // Auto-create/confirm demo account on first use
+        if (email === DEMO_EMAIL && (signInError.message.includes('Invalid login credentials') || signInError.message.includes('Email not confirmed'))) {
+          await supabase.functions.invoke('ensure-demo-user');
           const { error: retryError } = await supabase.auth.signInWithPassword({ email, password });
           if (retryError) throw retryError;
         } else {
